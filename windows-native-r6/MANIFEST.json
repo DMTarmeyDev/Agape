@@ -1,0 +1,18 @@
+{
+  "build": "AGAPE-WINDOWS-NATIVE-WEBVIEW-R6",
+  "target": "Windows 10/11 x64",
+  "expected_core": "DMT-CORE-V3.1-EARLY-ALPHA-R8",
+  "expected_document_studio": "R31.10",
+  "expected_work_engine": "R1.3",
+  "latest_rebuild_reference": "AGAPE-V3.1-FULL-REBUILD-R1.6",
+  "ui_host": "native-win32-embedded-webview2",
+  "external_browser_main_window": false,
+  "source_modified_by_installer": false,
+  "data_modified_by_installer": false,
+  "sha256": {
+    "Agape.exe": "8B83DF1E0CAC5C774EB4E4F731998A41E12EC4FD5BB1ADFC6D13460D394690E4",
+    "Agape-Setup-Native-R6.exe": "FAD70365AEE6A237BFC11EDAC4F2BF99CE4F02B5A3C4BAF73E8207FC76986B4F",
+    "reference_core.html": "FC455B39466E32CFD5E3F9CD9F8CBCDF8D23DB14C02937724C38D8B3CB74C286",
+    "latest_rebuild_script": "B2550DA0D6B95DCA025538154C8B50314FF4973CCA9A0E24DA4C466163211D31"
+  }
+}

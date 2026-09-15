@@ -1,0 +1,13 @@
+requests
+keyring
+odfpy
+pypdf
+pymupdf
+pillow
+python-docx
+openpyxl
+python-pptx
+llama-index-core
+llama-index-readers-file
+langchain
+langchain-text-splitters
