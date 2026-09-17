@@ -1,0 +1,49 @@
+name: Feature request
+description: Suggest an improvement to Agape
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: What user problem or friction should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the behaviour you would like.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional. What other approaches could solve the same problem?
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - User interface
+        - Installer / packaging
+        - AI models / routing
+        - Documents
+        - Connectors / integrations
+        - Testing / QA
+        - Automation
+        - Database / memory
+        - Cross-platform
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing Issues and Discussions for similar requests.
+          required: true

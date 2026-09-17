@@ -1,3 +1,10 @@
+<!-- AGAPE_GITHUB_BADGES_BEGIN -->
+[![CI](https://github.com/DMTarmeyDev/Agape/actions/workflows/ci.yml/badge.svg)](https://github.com/DMTarmeyDev/Agape/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/DMTarmeyDev/Agape/actions/workflows/codeql.yml/badge.svg)](https://github.com/DMTarmeyDev/Agape/actions/workflows/codeql.yml)
+[![GitHub stars](https://img.shields.io/github/stars/DMTarmeyDev/Agape?style=flat)](https://github.com/DMTarmeyDev/Agape/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/DMTarmeyDev/Agape)](https://github.com/DMTarmeyDev/Agape/issues)
+[![Last commit](https://img.shields.io/github/last-commit/DMTarmeyDev/Agape)](https://github.com/DMTarmeyDev/Agape/commits/main)
+<!-- AGAPE_GITHUB_BADGES_END -->
 Agape
 
 Human-first AI project development, automation, and workspace software.
@@ -424,19 +431,19 @@ For example:
 
 Project started
 
-[■■■■■■□□□□] 60%
+[â– â– â– â– â– â– â–¡â–¡â–¡â–¡] 60%
 
 Completed:
-✓ Project plan
-✓ Page structure
-✓ Initial code
+âœ“ Project plan
+âœ“ Page structure
+âœ“ Initial code
 
 Working on:
-→ Testing website
+â†’ Testing website
 
 Next:
-○ Repair any test failures
-○ Package completed project
+â—‹ Repair any test failures
+â—‹ Package completed project
 
 If something fails
 
@@ -448,12 +455,12 @@ Problem:
 The Contact page returned a 404 error.
 
 Completed successfully:
-✓ Home page
-✓ Services page
-✓ Navigation
+âœ“ Home page
+âœ“ Services page
+âœ“ Navigation
 
 Agape is now:
-→ Checking the missing Contact route
+â†’ Checking the missing Contact route
 
 Technical details
 [Show]
@@ -463,37 +470,37 @@ Suggested Project Structure
 The exact repository structure may evolve, but the project should remain modular.
 
 agape/
-│
-├── app/
-│   ├── ui/
-│   ├── projects/
-│   ├── workflows/
-│   ├── routing/
-│   ├── providers/
-│   ├── documents/
-│   ├── artifacts/
-│   ├── database/
-│   └── settings/
-│
-├── tests/
-│   ├── unit/
-│   ├── api/
-│   ├── browser/
-│   ├── workflow/
-│   └── security/
-│
-├── tools/
-│   ├── installers/
-│   ├── diagnostics/
-│   └── optional/
-│
-├── docs/
-│
-├── scripts/
-│
-├── README.md
-├── LICENSE
-└── .gitignore
+â”‚
+â”œâ”€â”€ app/
+â”‚   â”œâ”€â”€ ui/
+â”‚   â”œâ”€â”€ projects/
+â”‚   â”œâ”€â”€ workflows/
+â”‚   â”œâ”€â”€ routing/
+â”‚   â”œâ”€â”€ providers/
+â”‚   â”œâ”€â”€ documents/
+â”‚   â”œâ”€â”€ artifacts/
+â”‚   â”œâ”€â”€ database/
+â”‚   â””â”€â”€ settings/
+â”‚
+â”œâ”€â”€ tests/
+â”‚   â”œâ”€â”€ unit/
+â”‚   â”œâ”€â”€ api/
+â”‚   â”œâ”€â”€ browser/
+â”‚   â”œâ”€â”€ workflow/
+â”‚   â””â”€â”€ security/
+â”‚
+â”œâ”€â”€ tools/
+â”‚   â”œâ”€â”€ installers/
+â”‚   â”œâ”€â”€ diagnostics/
+â”‚   â””â”€â”€ optional/
+â”‚
+â”œâ”€â”€ docs/
+â”‚
+â”œâ”€â”€ scripts/
+â”‚
+â”œâ”€â”€ README.md
+â”œâ”€â”€ LICENSE
+â””â”€â”€ .gitignore
 
 Provider Architecture
 
@@ -660,7 +667,7 @@ Package reliable Windows releases
 
 Longer-Term Roadmap
 
-Phase 1 — Reliable Core
+Phase 1 â€” Reliable Core
 
 Projects
 
@@ -676,7 +683,7 @@ Templates
 
 Persistent project state
 
-Phase 2 — Intelligent Routing
+Phase 2 â€” Intelligent Routing
 
 Automatic model selection
 
@@ -688,7 +695,7 @@ Tool selection
 
 Cost/performance-aware routing
 
-Phase 3 — Automated Development
+Phase 3 â€” Automated Development
 
 Code generation
 
@@ -704,7 +711,7 @@ Checkpoints
 
 Rollback
 
-Phase 4 — Connected Workspace
+Phase 4 â€” Connected Workspace
 
 Documents
 
@@ -718,7 +725,7 @@ External services
 
 Optional plugins/connectors
 
-Phase 5 — Multi-Device Agape
+Phase 5 â€” Multi-Device Agape
 
 Windows desktop
 
@@ -879,3 +886,17 @@ Disclaimer
 Agape is experimental software under active development.
 
 Review important generated outputs before relying on them, especially where actions affect production systems, security, financial information, legal documents, or external accounts.
+<!-- AGAPE_GITHUB_COMMUNITY_BEGIN -->
+## Community, support and project status
+
+Agape is under active **alpha** development. The project is focused on human-first AI workflows, model/provider flexibility, safe automation, testing, checkpoints, and rollback.
+
+- **Questions and ideas:** use [GitHub Discussions](https://github.com/DMTarmeyDev/Agape/discussions).
+- **Bugs and feature requests:** use [GitHub Issues](https://github.com/DMTarmeyDev/Agape/issues).
+- **Contributing:** see [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Support:** see [SUPPORT.md](SUPPORT.md).
+- **Security:** see [SECURITY.md](SECURITY.md) and avoid posting vulnerabilities publicly.
+- **Roadmap:** see [ROADMAP.md](ROADMAP.md).
+
+If Agape is useful to you, starring the repository helps other people discover the project.
+<!-- AGAPE_GITHUB_COMMUNITY_END -->
