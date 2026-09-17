@@ -1,0 +1,8 @@
+# Default owner
+* @DMTarmeyDev
+
+# GitHub automation and community files
+/.github/ @DMTarmeyDev
+
+# Core application
+/core/ @DMTarmeyDev

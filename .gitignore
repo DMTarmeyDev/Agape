@@ -48,3 +48,14 @@ build/
 dist/
 tmp/
 temp/
+
+# Local credentials and secrets - never commit these
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials/
+secrets/

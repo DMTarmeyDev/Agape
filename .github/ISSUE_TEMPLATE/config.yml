@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and support
+    url: https://github.com/DMTarmeyDev/Agape/discussions
+    about: Ask setup, usage, workflow, and general support questions in Discussions.
+  - name: Security vulnerability
+    url: https://github.com/DMTarmeyDev/Agape/security
+    about: Please use the repository security guidance/private reporting path instead of a public issue.
