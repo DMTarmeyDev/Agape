@@ -1,3 +1,5 @@
+# Agape
+
 <!-- AGAPE_GITHUB_BADGES_BEGIN -->
 [![CI](https://github.com/DMTarmeyDev/Agape/actions/workflows/ci.yml/badge.svg)](https://github.com/DMTarmeyDev/Agape/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/DMTarmeyDev/Agape/actions/workflows/codeql.yml/badge.svg)](https://github.com/DMTarmeyDev/Agape/actions/workflows/codeql.yml)
@@ -5,887 +7,154 @@
 [![GitHub issues](https://img.shields.io/github/issues/DMTarmeyDev/Agape)](https://github.com/DMTarmeyDev/Agape/issues)
 [![Last commit](https://img.shields.io/github/last-commit/DMTarmeyDev/Agape)](https://github.com/DMTarmeyDev/Agape/commits/main)
 <!-- AGAPE_GITHUB_BADGES_END -->
-Agape
 
-Human-first AI project development, automation, and workspace software.
 
-Agape is an experimental AI workspace designed around a simple idea:
+Human-first AI workspace for projects, documents, coding, automation, testing and model/tool routing.
 
-The user should decide what they want done. Agape should handle how it gets done.
+## Download Agape
 
-Instead of making ordinary users manage AI models, agents, databases, terminals, providers, or automation pipelines, Agape aims to hide that complexity behind a clear task-oriented interface.
+### Windows
 
-Project Status
+**Current public application line: V5.5 Public Alpha**
 
-Status: Early Alpha / Active Development
+[**Download the latest Windows EXE**](../../releases/latest/download/Agape-Windows.exe)
 
-Agape is under active development. Some features are incomplete, experimental, or may change between builds.
+If the direct EXE link is not yet present, open the [latest GitHub Release](../../releases/latest) and choose the Windows asset. The repository release workflow builds `Agape-Windows.exe` on a native GitHub Windows runner from the same source code in this repository.
 
-The project is currently focused on:
+> Windows SmartScreen may warn about unsigned community builds until code-signing is configured. Check the SHA-256 file attached to the release before running a downloaded build.
 
-Making the interface simple for non-technical users
+### macOS
 
-Automatically choosing suitable AI models and tools
+[Download the latest macOS build](../../releases/latest/download/Agape-macOS.zip)
 
-Improving project execution and progress reporting
+The macOS build is generated from the same source code on a native GitHub macOS runner. Apple signing/notarisation should be configured before describing a public macOS build as trusted/no-warning.
 
-Making errors visible and understandable
+### Linux
 
-Connecting local and online AI providers
+[Download the latest Linux x86_64 build](../../releases/latest/download/Agape-Linux-x86_64)
 
-Building reliable testing, checkpoints, rollback, and recovery
+The Linux executable is generated on GitHub's Ubuntu runner. Make it executable after download if required: `chmod +x Agape-Linux-x86_64`.
 
-Reducing unnecessary technical controls from the main interface
+## Public Alpha
 
-Keeping advanced tools available without forcing normal users to understand them
+Agape is currently a **public Alpha**. Windows is the primary Alpha platform. Linux is an Alpha/technical-preview target and macOS is a development-preview target until native validation is complete. Alpha means the project is usable for testing and development, but interfaces and packaging can still change.
 
-Agape should not yet be treated as production-ready software.
+## API keys
 
-What Agape Is
+API keys are optional. Agape can run with local-model features without a cloud-provider key. There are three supported setup paths:
 
-Agape is intended to become a single workspace where a user can:
+1. **First-run setup:** Agape offers providers one at a time. Add one key, add another, or skip everything.
+2. **Settings > AI provider keys:** add, replace, import, or remove individual provider keys later.
+3. **Template file:** copy `API-KEYS.template.json` to `API-KEYS.local.json`, fill only the providers you use, and start Agape. Missing keys are imported without overwriting keys already saved in Agape.
 
-Describe what they want to achieve
+`API-KEYS.local.json` is ignored by Git and must never be committed. Saved keys use the operating system credential store when the packaged build has a usable keyring backend (for example Windows Credential Manager or macOS Keychain). If no OS credential backend is available, Agape falls back to a private local key file in its user-data directory rather than the public source tree. Agape's key-status API reports only whether a provider is configured; it never returns the key value. Environment variables such as `OPENAI_API_KEY` remain supported.
 
-Create or open a project
+You can also run:
 
-Give Agape instructions, documents, or files
+```bash
+python SETUP-API-KEYS.py
+```
 
-Press Start Work
+This asks about one provider at a time and hides pasted key values while typing.
 
-See clear project progress
+## Source code
 
-Allow Agape to select suitable models, tools, and workflows automatically
+Agape uses **one shared source codebase** for Windows, macOS and Linux. Platform-specific functions are kept behind platform-aware adapters rather than maintaining three separate copies of Agape.
 
-Review results, files, errors, and decisions
+The shared code includes:
 
-Continue improving the project from the same workspace
+- the human-first project/document workflow;
+- Workspace with project/results filing, to-do and job panels;
+- right-click context menus;
+- automatic AI/model routing;
+- coding-engine support for Agape Native, Aider, OpenHands and Open Interpreter;
+- optional VS Code/Theia code-management integration;
+- browser real-click testing with Playwright;
+- optional accessibility, API, security, quality and load testing tools;
+- checkpoints/recovery and persistent local state.
 
-The long-term goal is for technical complexity to remain behind the scenes unless the user deliberately opens advanced settings.
+Some capabilities are intentionally platform-specific. For example, `winget` and `pywinauto` are Windows integrations and are not treated as required macOS/Linux dependencies.
 
-Human-First Design
+## Platform status
 
-The normal Agape workflow should feel like this:
+| Platform | Shared source | Automated build | Download format | Status |
+|---|---|---|---|---|
+| Windows 10/11 | Yes | GitHub Windows runner | `.exe` | Primary release platform |
+| macOS | Yes | GitHub macOS runner | `.app` inside `.zip` | Cross-platform build path ready; native validation/signing still required |
+| Linux x86_64 | Yes | GitHub Ubuntu runner | standalone binary | Cross-platform build path ready; distro validation still required |
 
-Tell Agape what you want
-        |
-        v
-Create / Open Project
-        |
-        v
-Add instructions or files
-        |
-        v
-Start Work
-        |
-        v
-Agape plans the work
-        |
-        v
-Agape selects models + tools
-        |
-        v
-Work runs automatically
-        |
-        v
-Progress is shown clearly
-        |
-        v
-Result / error / next action
+Windows remains the primary validation target until it reaches the desired stability. macOS/Linux should not be labelled fully validated until their GitHub native-runner tests and real-machine checks pass.
 
-The normal user should not need to understand:
+## Running from source
 
-Model names
+Requires Python 3.11+ (3.12 recommended).
 
-Model providers
+```bash
+python -m pip install -U pytest
+python main.py
+```
 
-Agent architecture
+Agape opens at `http://127.0.0.1:8850/` and the desktop launcher opens the default browser automatically.
 
-Database internals
+On Linux/macOS you can also use:
 
-Terminal commands
+```bash
+./platform/start-agape.sh
+```
 
-Automation engines
+On Windows:
 
-API routing
+```text
+platform\START-AGAPE-WINDOWS.cmd
+```
 
-Diagnostic systems
+## Testing
 
-Internal project IDs
+Run the active test suite with:
 
-Artifact storage structure
+```bash
+python -m pytest -q tests
+```
 
-These can still exist as advanced features.
+GitHub Actions runs the suite on Windows, macOS and Linux on every push/pull request. Tagged releases are built only after the platform test job succeeds.
 
-Core Principles
+## Creating a release
 
-1. Human first
+Push the source to GitHub, then create and push a version tag:
 
-Use normal language instead of technical language wherever possible.
+```bash
+git tag v5.5.0
+git push origin v5.5.0
+```
 
-2. One obvious next step
+The release workflow then:
 
-The interface should make it clear what the user should do next.
+1. tests the repository on native runners;
+2. builds `Agape-Windows.exe`;
+3. builds `Agape-macOS.zip`;
+4. builds `Agape-Linux-x86_64`;
+5. creates `SHA256SUMS.txt`;
+6. publishes the files to GitHub Releases.
 
-3. Automatic routing
+GitHub Releases is the preferred binary distribution location. The source repository should contain source code; executable builds belong in Releases rather than being committed into Git history.
 
-Agape should automatically choose an appropriate available AI model, provider, tool, or workflow whenever practical.
+## Current Windows feature line
 
-4. Progressive disclosure
+V5.5 includes the Workspace/right-click work from V5.0/V5.1, optional Testing Tools from V5.2, the cross-platform release structure from V5.3, public-release/API-key onboarding from V5.4, and the V5.5 Review/download reliability pass. V5.5 collapses missing-information and brief-change panels by default, adds a dedicated research progress display and Download Manager, fixes finished-result downloads to use the active Workflow Bridge on port 8852, and adds an isolated 22-step full dummy QA release gate.
 
-Simple controls first. Advanced controls only when requested.
+The first-run flow keeps API setup optional and deliberately asks for one provider at a time to avoid confusing users with a wall of credential fields. Keys can always be added later in Settings.
 
-5. Visible progress
+For detailed development history and previous release notes, see [`docs/README-V5.2-DETAILS.md`](docs/README-V5.2-DETAILS.md) and the `CHANGES-*.md` files.
 
-When work starts, Agape should clearly show that the project has started and display its progress.
+## Security
 
-6. Useful errors
+Agape does not require Microsoft Defender to be disabled and should not silently add antivirus exclusions. Release binaries should be accompanied by SHA-256 hashes. For public distribution, Windows code signing and Apple signing/notarisation should be added before presenting builds as production-trusted packages.
 
-A task must never simply say:
 
-Completed with error
+## Licence
 
-without explaining what failed.
+See [`LICENSE`](LICENSE). The current Alpha repository is source-available. Third-party dependencies retain their own licences.
 
-Errors should show:
-
-What failed
-
-Which step failed
-
-A useful explanation
-
-Whether anything completed successfully
-
-What Agape will try next
-
-What the user can do if intervention is required
-
-7. Safe automation
-
-Automated changes should use testing, checkpoints, validation, and rollback where appropriate.
-
-Main Features
-
-Agape is being developed around the following capabilities.
-
-Projects
-
-Create, open, continue, and manage AI-assisted projects.
-
-A project should contain the context required to continue work without forcing the user to repeatedly explain the same task.
-
-Start Work
-
-A clear Start Work action begins the project workflow.
-
-After starting, the UI should show:
-
-Project started
-
-Current stage
-
-Current task
-
-Progress
-
-Completed steps
-
-Errors
-
-Final result
-
-Suggested next action
-
-Automatic AI Model Routing
-
-Agape is designed to work with multiple AI models rather than being tied to one model.
-
-The routing layer can eventually choose between:
-
-Local models
-
-Online models
-
-Coding models
-
-Reasoning models
-
-Fast models
-
-Higher-quality models
-
-Specialist tools
-
-Model selection should normally be automatic.
-
-Advanced users may still be given manual controls.
-
-Local AI
-
-Agape can be developed to work with local model systems such as Ollama and other compatible local inference tools.
-
-Local models can be useful for:
-
-Private work
-
-Repetitive tasks
-
-Low-cost processing
-
-Offline operation
-
-Fast lightweight tasks
-
-Online AI Providers
-
-The architecture is intended to support online AI providers alongside local models.
-
-Provider connections should be optional and securely configured.
-
-Documents
-
-Agape includes work toward document creation and document-processing workflows.
-
-The intended flow is:
-
-User request
-    |
-    v
-Collect required information
-    |
-    v
-Choose suitable AI/tool
-    |
-    v
-Generate document
-    |
-    v
-Validate output
-    |
-    v
-Save / export
-
-File Input
-
-Projects should be able to receive information by:
-
-Typing or pasting text
-
-Uploading a file
-
-Using a template
-
-Reusing existing project information
-
-Templates
-
-Templates can provide structured starting points for repeatable work without forcing the user to manually construct a prompt.
-
-Artifacts
-
-Agape can track useful project outputs such as:
-
-Generated files
-
-Builds
-
-Releases
-
-Test reports
-
-Checkpoints
-
-Backups
-
-Instructions
-
-Summaries
-
-Exports
-
-Source code should not be unnecessarily duplicated just to create more artifacts.
-
-Database
-
-Persistent project information can be stored in a database so projects can be resumed and inspected.
-
-The database layer should remain largely invisible to ordinary users.
-
-Testing
-
-Testing is a major part of the Agape architecture.
-
-Planned and developing test coverage includes:
-
-Unit tests
-
-API tests
-
-Browser tests
-
-UI interaction tests
-
-Workflow tests
-
-Security tests
-
-Installation tests
-
-Regression tests
-
-Model/provider tests
-
-The goal is eventually to automatically test every important button, link, form, and project workflow before a release is considered usable.
-
-Checkpoints and Rollback
-
-Before major automated changes, Agape should be able to create a checkpoint.
-
-If validation fails, the system should be capable of returning to a known-good state.
-
-Automation
-
-Agape is intended to perform multi-step work rather than only generating chat responses.
-
-Examples include:
-
-Creating code
-
-Editing code
-
-Running tests
-
-Diagnosing failures
-
-Repairing problems
-
-Creating documents
-
-Processing files
-
-Managing project artifacts
-
-Running development workflows
-
-Optional Developer Tools
-
-Developer-oriented tools may be added as optional components rather than forced into the normal interface.
-
-Examples may include:
-
-Aider
-
-Coding assistants
-
-Test runners
-
-Browser automation
-
-Local model runtimes
-
-Development libraries
-
-Diagnostic tools
-
-These should be installable or enabled only when useful.
-
-Simplified Main Interface
-
-The main interface is intended to focus on a small number of user-facing areas.
-
-Home
-
-Create Project
-Open Project
-
-Ask Agape
-
-Recent Work
-
-Settings
-
-Technical areas should normally be moved into Settings, Advanced, or Developer Tools rather than filling the primary navigation.
-
-Example User Workflow
-
-Create a project
-
-The user describes the outcome:
-
-Create a small website for my flooring business.
-
-Agape gathers missing information
-
-Agape asks only for information that is genuinely required.
-
-Start work
-
-The user presses:
-
-Start Work
-
-Progress appears
-
-For example:
-
-Project started
-
-[â– â– â– â– â– â– â–¡â–¡â–¡â–¡] 60%
-
-Completed:
-âœ“ Project plan
-âœ“ Page structure
-âœ“ Initial code
-
-Working on:
-â†’ Testing website
-
-Next:
-â—‹ Repair any test failures
-â—‹ Package completed project
-
-If something fails
-
-Instead of hiding the failure:
-
-Testing failed
-
-Problem:
-The Contact page returned a 404 error.
-
-Completed successfully:
-âœ“ Home page
-âœ“ Services page
-âœ“ Navigation
-
-Agape is now:
-â†’ Checking the missing Contact route
-
-Technical details
-[Show]
-
-Suggested Project Structure
-
-The exact repository structure may evolve, but the project should remain modular.
-
-agape/
-â”‚
-â”œâ”€â”€ app/
-â”‚   â”œâ”€â”€ ui/
-â”‚   â”œâ”€â”€ projects/
-â”‚   â”œâ”€â”€ workflows/
-â”‚   â”œâ”€â”€ routing/
-â”‚   â”œâ”€â”€ providers/
-â”‚   â”œâ”€â”€ documents/
-â”‚   â”œâ”€â”€ artifacts/
-â”‚   â”œâ”€â”€ database/
-â”‚   â””â”€â”€ settings/
-â”‚
-â”œâ”€â”€ tests/
-â”‚   â”œâ”€â”€ unit/
-â”‚   â”œâ”€â”€ api/
-â”‚   â”œâ”€â”€ browser/
-â”‚   â”œâ”€â”€ workflow/
-â”‚   â””â”€â”€ security/
-â”‚
-â”œâ”€â”€ tools/
-â”‚   â”œâ”€â”€ installers/
-â”‚   â”œâ”€â”€ diagnostics/
-â”‚   â””â”€â”€ optional/
-â”‚
-â”œâ”€â”€ docs/
-â”‚
-â”œâ”€â”€ scripts/
-â”‚
-â”œâ”€â”€ README.md
-â”œâ”€â”€ LICENSE
-â””â”€â”€ .gitignore
-
-Provider Architecture
-
-Agape should avoid hard-coding the whole application to one AI provider.
-
-A simplified architecture is:
-
-User Task
-   |
-   v
-Agape Task Planner
-   |
-   v
-Model / Tool Router
-   |
-   +--> Local Model
-   |
-   +--> Online AI
-   |
-   +--> Coding Tool
-   |
-   +--> Document Tool
-   |
-   +--> Browser / Test Tool
-   |
-   v
-Validation
-   |
-   v
-Result
-
-A provider failure should not automatically mean the whole project fails when another suitable provider or tool is available.
-
-Error Handling
-
-All important failures should be recorded in a structured form.
-
-Example:
-
-{
-  "status": "failed",
-  "stage": "document_generation",
-  "message": "The selected AI provider did not return a valid document.",
-  "completed_steps": [
-    "project_loaded",
-    "requirements_checked"
-  ],
-  "next_action": "try_alternative_provider"
-}
-
-The normal UI should convert this into clear human language.
-
-Raw technical details should remain available under an expandable section for debugging.
-
-Security Direction
-
-Agape may eventually connect to accounts, AI providers, email services, files, local applications, and external systems.
-
-Security principles include:
-
-Never store passwords in plaintext
-
-Prefer OAuth where supported
-
-Encrypt stored secrets
-
-Use operating-system credential protection where practical
-
-Separate test and production accounts
-
-Use least-privilege permissions
-
-Validate uploaded files
-
-Validate external input
-
-Keep security logs
-
-Avoid exposing internal services directly to the public internet
-
-Require confirmation for sensitive or destructive operations
-
-Test authentication and authorization boundaries
-
-Keep secrets out of Git repositories
-
-Never commit API keys, passwords, OAuth tokens, private certificates, or other secrets to GitHub.
-
-Installation
-
-Installation is currently evolving and may differ between development builds.
-
-A future stable installation flow should aim to be:
-
-Download
-   |
-   v
-Run installer
-   |
-   v
-Agape checks required components
-   |
-   v
-Choose optional components
-   |
-   v
-Install
-   |
-   v
-Run automated self-test
-   |
-   v
-Open Agape
-
-Optional dependencies should be clearly separated from required dependencies.
-
-Development Goals
-
-The immediate development priorities are:
-
-Make Start Work reliably launch a project
-
-Add a persistent project-started status banner
-
-Add live project progress
-
-Show current workflow stage
-
-Replace vague error states with useful error information
-
-Automatically choose an appropriate AI provider/model
-
-Add provider fallback when possible
-
-Simplify project creation
-
-Support text input and file upload from the same workflow
-
-Improve template selection
-
-Improve document-generation reliability
-
-Test every main navigation link
-
-Test every important button
-
-Test every form
-
-Add end-to-end browser testing
-
-Improve installation validation
-
-Improve checkpoint and rollback handling
-
-Reduce duplicate/unnecessary artifacts
-
-Improve database management
-
-Move technical controls into Advanced Settings
-
-Improve security validation
-
-Package reliable Windows releases
-
-Longer-Term Roadmap
-
-Phase 1 â€” Reliable Core
-
-Projects
-
-Start Work
-
-Progress reporting
-
-Error reporting
-
-File input
-
-Templates
-
-Persistent project state
-
-Phase 2 â€” Intelligent Routing
-
-Automatic model selection
-
-Local/online provider routing
-
-Provider fallback
-
-Tool selection
-
-Cost/performance-aware routing
-
-Phase 3 â€” Automated Development
-
-Code generation
-
-Repository-aware editing
-
-Automated testing
-
-Browser testing
-
-Repair loops
-
-Checkpoints
-
-Rollback
-
-Phase 4 â€” Connected Workspace
-
-Documents
-
-Email
-
-Cloud storage
-
-Communication tools
-
-External services
-
-Optional plugins/connectors
-
-Phase 5 â€” Multi-Device Agape
-
-Windows desktop
-
-Web access
-
-Lightweight mobile interface
-
-Server-assisted heavy processing
-
-Advanced Mode
-
-Advanced users and developers may need access to:
-
-Model selection
-
-Provider configuration
-
-Model routing logs
-
-Agent/workflow details
-
-Database tools
-
-Terminal history
-
-Diagnostics
-
-Test reports
-
-Artifact management
-
-Developer tools
-
-Security diagnostics
-
-These controls should remain available without becoming requirements for normal use.
-
-Repository Rules
-
-Contributors should follow these basic principles:
-
-Keep the normal UI human-readable.
-
-Do not expose technical controls without a user need.
-
-Do not hard-code the application to one AI model.
-
-Keep model/provider logic modular.
-
-Add tests for important new behaviour.
-
-Report errors clearly.
-
-Avoid silent failures.
-
-Keep secrets out of source control.
-
-Prefer small replaceable modules over tightly coupled code.
-
-Preserve rollback paths for risky automated changes.
-
-Testing Philosophy
-
-A feature is not complete merely because the code runs once.
-
-For major workflows, testing should attempt to verify:
-
-Open page
-    |
-    v
-Use control
-    |
-    v
-Submit realistic data
-    |
-    v
-Verify result
-    |
-    v
-Verify stored state
-    |
-    v
-Verify error path
-    |
-    v
-Repeat after restart
-
-Important workflows should eventually be tested automatically before release.
-
-Current Limitations
-
-Because Agape is still in early development:
-
-Some UI controls may not yet be connected
-
-Some workflows may fail without enough diagnostic information
-
-Provider integrations may require additional configuration
-
-Installation scripts may change
-
-Browser and desktop builds may behave differently
-
-Automatic model routing is still being improved
-
-Security work is ongoing
-
-APIs and database schemas may change
-
-Documentation may lag behind experimental builds
-
-Please report reproducible problems with enough information to identify the failing build and workflow.
-
-Contributing
-
-Contributions, testing, ideas, and bug reports are welcome.
-
-When reporting a bug, include where possible:
-
-Agape build/version
-
-Windows or operating-system version
-
-What you clicked
-
-What you expected
-
-What happened
-
-Error message
-
-Relevant log output
-
-Whether the issue is reproducible
-
-Do not include passwords, API keys, tokens, or private account information in bug reports.
-
-Vision
-
-Agape is not intended to be another interface that requires the user to become an AI engineer.
-
-The intended experience is:
-
-Tell Agape the result you need. Agape works out the technical path, shows its progress, explains problems clearly, and gives you the finished work.
-
-The complexity can exist.
-
-The user should not have to carry it.
-
-License
-
-A licence has not yet been specified for this repository.
-
-Before publishing the project for public reuse, add an appropriate LICENSE file and update this section.
-
-Disclaimer
-
-Agape is experimental software under active development.
-
-Review important generated outputs before relying on them, especially where actions affect production systems, security, financial information, legal documents, or external accounts.
 <!-- AGAPE_GITHUB_COMMUNITY_BEGIN -->
 ## Community, support and project status
 

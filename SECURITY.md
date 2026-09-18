@@ -1,21 +1,57 @@
 # Security Policy
 
-## Supported Versions
+[Main README](README.md) · [Security architecture](docs/SECURITY-AUTHORIZATION.md)
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+## Supported status
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+Agape is under active development and should currently be treated as early-alpha security-sensitive software.
 
-## Reporting a Vulnerability
+Do not describe the software as unhackable.
 
-Use this section to tell people how to report a vulnerability.
+## Reporting a vulnerability
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+For the public GitHub repository, report vulnerabilities privately through GitHub Security Advisories/private vulnerability reporting when available. Do not open a public Issue containing exploit details.
+
+When reporting:
+
+- do not publish secrets;
+- do not paste exploit credentials into public tickets;
+- preserve relevant logs/evidence;
+- notify the project owner through a private trusted channel.
+
+## Response principles
+
+Security reports should be:
+
+1. acknowledged;
+2. triaged by impact;
+3. reproduced safely;
+4. fixed in a candidate;
+5. regression-tested;
+6. released through the secure update process;
+7. documented without exposing unnecessary exploit secrets.
+
+## Severity
+
+Suggested categories:
+
+```text
+CRITICAL
+HIGH
+MEDIUM
+LOW
+INFO
+```
+
+Critical examples include:
+
+- authentication bypass;
+- remote code execution;
+- arbitrary credential disclosure;
+- AI authorization bypass;
+- update signing bypass;
+- public access to private admin functions.
+
+## Disclosure
+
+Use coordinated disclosure. Give maintainers reasonable time to reproduce, fix, regression-test, and release a correction before publishing exploit details.

@@ -1,0 +1,8 @@
+{
+  "version": "R31.16",
+  "data_root": "data",
+  "template_library": "data/templates",
+  "output_root": "data/outputs",
+  "port": 8800,
+  "soffice": "auto"
+}

@@ -1,0 +1,5 @@
+{
+  "name": "Terminal Workflow",
+  "required": true,
+  "cases": ["terminal_journey"]
+}

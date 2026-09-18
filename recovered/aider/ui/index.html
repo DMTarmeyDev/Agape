@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Agape AI Studio</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <strong>AGAPE AI STUDIO</strong>
+    <div class="top-actions">
+      <span id="projectLabel">Home</span>
+      <button id="aiStatus" title="Choose AI mode and inspect available models">AI: Auto</button>
+      <button id="passedBtn" title="Verified completed project parts">Passed</button>
+      <button id="extensionsBtn">Extensions</button>
+      <button id="settingsBtn">Settings</button>
+    </div>
+  </header>
+
+  <main id="homeView" class="home-view">
+    <section class="hero">
+      <h1>Agape AI Studio</h1>
+      <p>Open a project, write code, use the terminal, and ask Agape for help.</p>
+      <textarea id="homePrompt" placeholder="What would you like to build or work on?"></textarea>
+      <div class="hero-actions">
+        <button id="openProjectBtn">Open Project</button>
+        <button id="newProjectBtn">New Project</button>
+      </div>
+    </section>
+    <section>
+      <h2>Recent Projects</h2>
+      <div id="recentProjects" class="recent-list"></div>
+    </section>
+  </main>
+
+  <main id="workspaceView" class="workspace hidden">
+    <aside class="explorer">
+      <div class="pane-title">PROJECT</div>
+      <div id="fileList" class="file-list"></div>
+    </aside>
+    <section class="editor-area">
+      <div class="editor-tabs"><span id="activeTab">No file open</span><button id="saveFileBtn">Save</button></div>
+      <textarea id="editor" spellcheck="false" placeholder="Open a file from the project explorer"></textarea>
+      <section class="ai-pane">
+        <div class="pane-title">AGAPE AI <span id="aiRouteNote" class="muted"></span></div>
+        <div id="aiMessages" class="messages"></div>
+        <div class="ai-input-row">
+          <input id="aiInput" placeholder="Ask Agape about this project or current file">
+          <button id="askAiBtn">Ask</button>
+          <button id="runAiderBtn" title="Run the current task through the optional Aider coding engine after Agape planning and safety checks">Run Aider</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <section id="terminalPanel" class="terminal-panel">
+    <div class="terminal-handle" id="terminalHandle"></div>
+    <div class="terminal-head"><strong>TERMINAL</strong><button id="terminalToggle">Collapse</button></div>
+    <pre id="terminalOutput">Agape terminal ready.</pre>
+    <div class="terminal-row"><input id="terminalInput" placeholder="Command, e.g. python --version"><button id="terminalRun">Run</button></div>
+  </section>
+
+  <dialog id="aiDialog" class="wide-dialog">
+    <div class="dialog-head"><h2>AI Model Manager</h2><button data-close="aiDialog">Close</button></div>
+    <p class="muted">Auto is local-first. If every allowed local model fails, Agape may fall back to a verified zero-cost online model. Paid automatic fallback is disabled.</p>
+    <div class="control-row">
+      <label>Mode
+        <select id="aiMode">
+          <option value="auto">Auto - local first, free fallback</option>
+          <option value="local">Local only</option>
+          <option value="free">Free online only</option>
+        </select>
+      </label>
+      <button id="refreshAiBtn">Refresh Models</button>
+      <button id="testConnectionsBtn">Test Connections</button>
+    </div>
+    <section class="dialog-section">
+      <h3>Providers</h3>
+      <div id="providerList" class="status-list"></div>
+    </section>
+    <section class="dialog-section">
+      <h3>Best Free Models</h3>
+      <div id="freeModelList" class="status-list"></div>
+    </section>
+    <section class="dialog-section">
+      <h3>Saved Connection Tests</h3>
+      <div id="connectionHistory" class="status-list"></div>
+    </section>
+  </dialog>
+
+  <dialog id="passedDialog" class="wide-dialog">
+    <div class="dialog-head"><h2>Passed</h2><button data-close="passedDialog">Close</button></div>
+    <p id="passedSummary" class="muted">No published release quality report yet.</p>
+    <div id="passedList" class="status-list"></div>
+    <details id="openIssuesBlock"><summary>Open / not yet passed</summary><div id="openIssuesList" class="status-list"></div></details>
+  </dialog>
+
+  <dialog id="extensionsDialog" class="wide-dialog">
+    <div class="dialog-head"><h2>Extensions & Development Tools</h2><button data-close="extensionsDialog">Close</button></div>
+    <section class="dialog-section">
+      <h3>Aider coding engine</h3>
+      <p class="muted">Optional repo-aware coding engine. Agape keeps project scope, model routing, testing and release control. Aider is used only after an explicit Run Aider action.</p>
+      <div class="control-row"><button id="checkAiderBtn">Check Aider</button><span id="aiderStatusText" class="muted">Not checked</span></div>
+    </section>
+    <section class="dialog-section"><h3>Installed Studio Extensions</h3><div id="extensionsList"></div></section>
+  </dialog>
+  <dialog id="settingsDialog"><h2>Settings</h2><p>V0.3 keeps settings intentionally small. Aider remains an optional coding engine, not a core dependency. AI selection is managed from the AI button.</p><button data-close="settingsDialog">Close</button></dialog>
+  <script src="/app.js"></script>
+</body>
+</html>

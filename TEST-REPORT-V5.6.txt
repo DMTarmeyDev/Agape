@@ -1,0 +1,28 @@
+AGAPE V5.6 TEST REPORT
+Date: 2026-09-18
+Build: AGAPE-MAINFRAME-V5.6-RESEARCH-PROJECT-CONTINUITY
+Version: 5.6.0
+
+ROOT REGRESSION: 131/131 PASS
+WORKFLOW BRIDGE: 49/49 PASS
+PUBLIC RELEASE AUDIT: PASS
+PYTHON COMPILE: PASS
+FULL DUMMY/BROWSER QA: 25/25 PASS
+BROWSER CONSOLE ERRORS: 0
+BROWSER PAGE ERRORS: 0
+
+V5.6 behavior verified:
+- extra-information section hidden when no public information is useful
+- extra-information section collapsed by default when public research is available
+- separate user/private missing-information section
+- real public-research backend path before AI field filling
+- public research evidence passed into AI fill
+- panel hides after public research resolves public gaps
+- new paste/upload work auto-saved as a user project
+- project/workspace refresh hooks present
+- multi-job Download Manager persistence/history hydration
+- nested Workflow Bridge job status synchronized correctly
+- Windows runtime directories recreated before provider CLI execution
+- bundled North West flooring recovery/recycling feasibility project
+- Playwright top-level Advanced selector repaired
+- DOCX/PDF creation/download/retry/download-again/open-folder flow PASS

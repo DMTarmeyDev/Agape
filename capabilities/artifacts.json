@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "id": "artifacts",
+  "name": "Artifacts & releases",
+  "summary": "Track outputs, hashes, checkpoints, release evidence and last-known-good state.",
+  "category": "work",
+  "profiles": [
+    "standard",
+    "advanced"
+  ],
+  "hidden": false,
+  "service": {
+    "id": "artifacts",
+    "port": 8798
+  },
+  "python_modules": [],
+  "support": [],
+  "permissions": [
+    "artifact directories",
+    "metadata database"
+  ],
+  "install_policy": "on-demand"
+}

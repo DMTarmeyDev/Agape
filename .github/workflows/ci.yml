@@ -15,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -61,7 +61,7 @@ jobs:
         run: |
           if find . -maxdepth 5 -type f \( -name "test_*.py" -o -name "*_test.py" \) | grep -q .; then
             python -m pip install pytest
-            python -m pytest -q
+            python -m pytest -q tests
           else
             echo "No pytest-style tests found; skipping pytest."
           fi

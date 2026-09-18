@@ -1,0 +1,11 @@
+AGAPE V3.5 PROJECT RECOVERY TEST REPORT
+
+Mainframe / human-first: 59/59 PASS
+Workflow / document bridge: 49/49 PASS
+Project recovery merge: PASS
+Project recovery idempotency: PASS
+Template/mock/test exclusion: PASS
+Historic message merge into existing project: PASS
+Recovered archived user project made visible: PASS
+JavaScript syntax: PASS
+Python compile: PASS

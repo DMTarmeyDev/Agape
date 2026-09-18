@@ -1,0 +1,8 @@
+AGAPE V5.0 WORKSPACE - TEST REPORT
+
+PASS - Python compile checks
+PASS - JavaScript syntax check
+PASS - Active regression suite: 93/93
+PASS - Workspace contract tests
+PASS - Workspace included in real-click QA script
+ENVIRONMENT BLOCK - Real Chromium click execution in this build container is blocked by administrator policy for localhost (ERR_BLOCKED_BY_ADMINISTRATOR). This is not reported as a UI pass. Run the built-in Real Click Testing gate on the Windows target host.

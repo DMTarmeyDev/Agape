@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "public-access",
+  "name": "Public/tester access",
+  "summary": "Optional secure tester/public gateway based on recovered owner-access work.",
+  "category": "connectors",
+  "profiles": [
+    "advanced"
+  ],
+  "hidden": false,
+  "service": null,
+  "python_modules": [],
+  "support": [
+    {
+      "kind": "winget",
+      "package": "tailscale",
+      "label": "Tailscale",
+      "when": "when public/tester access is deliberately enabled"
+    }
+  ],
+  "permissions": [
+    "gateway only",
+    "never expose private Core port directly"
+  ],
+  "install_policy": "on-demand"
+}

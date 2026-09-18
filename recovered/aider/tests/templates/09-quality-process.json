@@ -1,0 +1,5 @@
+{
+  "name": "Quality Ledger and Passed Menu",
+  "required": true,
+  "cases": ["passed_menu_contract", "quality_ledger_journey"]
+}

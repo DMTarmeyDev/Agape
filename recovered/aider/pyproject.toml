@@ -1,0 +1,8 @@
+[project]
+name = "agape-ai-studio"
+version = "0.3.0"
+description = "Agape AI Studio V0.3 with local/free AI routing and optional Aider coding-engine integration"
+requires-python = ">=3.10"
+
+[tool.agape]
+build = "AGAPE-AI-STUDIO-V0.3-AIDER-R2"

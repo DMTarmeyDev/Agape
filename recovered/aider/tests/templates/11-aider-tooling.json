@@ -1,0 +1,10 @@
+{
+  "name": "Aider Tooling Integration",
+  "required": true,
+  "cases": [
+    "aider_status_planning_journey",
+    "aider_execution_journey",
+    "aider_optional_fallback_journey",
+    "aider_ui_contract"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "Complete Studio User Journey",
+  "required": true,
+  "cases": [
+    "full_user_journey"
+  ]
+}

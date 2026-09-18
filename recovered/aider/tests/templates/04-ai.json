@@ -1,0 +1,5 @@
+{
+  "name": "Agape AI Workflow",
+  "required": true,
+  "cases": ["ai_journey"]
+}

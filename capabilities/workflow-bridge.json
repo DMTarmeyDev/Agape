@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "id": "workflow-bridge",
+  "name": "Workflow bridge",
+  "summary": "Compatibility adapter for the proven R2.4 document/research workflow.",
+  "category": "internal",
+  "profiles": [
+    "basic",
+    "standard",
+    "advanced"
+  ],
+  "hidden": true,
+  "service": {
+    "id": "workflow-bridge",
+    "port": 8852
+  },
+  "python_modules": [],
+  "support": [],
+  "permissions": [
+    "localhost only"
+  ],
+  "install_policy": "internal"
+}

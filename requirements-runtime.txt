@@ -1,0 +1,16 @@
+# Runtime dependencies required by the bundled Document Studio service.
+# Keep this aligned with recovered/agape-document-studio/requirements-recovered.txt.
+requests
+keyring>=25,<26
+odfpy
+pypdf
+pymupdf
+pillow
+python-docx
+openpyxl
+python-pptx
+llama-index-core
+llama-index-readers-file
+langchain
+langchain-text-splitters
+pyspellchecker

@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "id": "projects",
+  "name": "Projects",
+  "summary": "Create, open and continue project work.",
+  "category": "core",
+  "profiles": [
+    "basic",
+    "standard",
+    "advanced"
+  ],
+  "hidden": true,
+  "service": {
+    "id": "r8-core",
+    "port": 8797
+  },
+  "python_modules": [],
+  "support": [],
+  "permissions": [
+    "project read/write through Core"
+  ],
+  "install_policy": "always"
+}

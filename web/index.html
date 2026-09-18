@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Agape</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div><h1>Agape</h1><p>Give Agape the information. It fills the brief, chooses the AI and creates the result.</p></div>
+    <span id="status" class="pill">Checking…</span>
+  </header>
+
+  <nav>
+    <button data-page="home" class="active">Create</button>
+    <button data-page="projects">Projects</button>
+    <button data-page="results">Results</button>
+    <button data-page="workspace">Workspace</button>
+    <button data-page="settings">Settings</button>
+  </nav>
+
+  <main>
+    <section id="home" class="page active">
+      <div class="workflow-steps" aria-label="Create workflow">
+        <span id="stepIndicator1" class="workflow-step active">1 <b>Source</b></span>
+        <span id="stepIndicator2" class="workflow-step">2 <b>Review</b></span>
+        <span id="stepIndicator3" class="workflow-step">3 <b>Result</b></span>
+      </div>
+
+      <div class="card hero" id="sourceCard">
+        <div class="step-label">1 · Source</div>
+        <h2>What should Agape work from?</h2>
+        <p class="muted">Choose one source. Once selected, Agape hides the other source paths so you only see what matters.</p>
+
+        <div class="source-mode-tabs" role="tablist" aria-label="Choose source type">
+          <button type="button" class="source-mode selected" data-source-mode="paste"><b>Paste text</b><span>Notes or an existing brief</span></button>
+          <button type="button" class="source-mode" data-source-mode="upload"><b>Upload document</b><span>Word, PDF, text and more</span></button>
+          <button type="button" class="source-mode" data-source-mode="project"><b>Saved project</b><span>Use existing Agape context</span></button>
+        </div>
+
+        <div id="sourcePastePanel" class="source-panel">
+          <label class="full"><span>Paste your source text</span>
+            <textarea id="sourceText" rows="10" spellcheck="true" autocapitalize="sentences" placeholder="Paste notes, an existing proposal, business information, rough ideas or anything Agape should use…"></textarea>
+          </label>
+        </div>
+
+        <div id="sourceUploadPanel" class="source-panel hidden">
+          <label class="file source-file"><input id="file" type="file"><span id="fileLabel">Choose a document</span></label>
+          <p class="muted">Agape extracts the text and runs the same spelling/grammar check used for pasted text.</p>
+        </div>
+
+        <div id="sourceProjectPanel" class="source-panel hidden">
+          <label class="full"><span>Saved project</span>
+            <select id="project" class="source-project"><option value="0">Choose a saved project</option></select>
+          </label>
+          <p class="muted">Agape uses the project's brief, saved details and available conversation context.</p>
+          <details id="projectCodingOptions" class="coding-options">
+            <summary>Coding options</summary>
+            <p class="muted">These choices are used when the selected project task is software development. Keeping model, agent and editor separate lets you compare combinations fairly.</p>
+            <div class="settings-grid">
+              <label class="setting"><b>Coding model</b><select id="projectCodingModel"><option value="auto-coding">Auto · coding specialist</option><option value="local-first">Local/open model first</option><option value="cloud-first">Cloud coding model first</option><option value="manual">Manual model choice</option></select></label>
+              <label class="setting"><b>Coding agent</b><select id="projectCodingAgent"><option value="auto">Auto choose</option><option value="agape-native">Agape Native</option><option value="aider">Aider</option><option value="openhands">OpenHands</option><option value="open-interpreter">Open Interpreter</option><option value="compare">Compare engines</option></select></label>
+              <label class="setting"><b>Code manager</b><select id="projectCodeManager"><option value="agape">Agape workspace</option><option value="theia-lite">Theia Lite</option><option value="theia-full">Theia Full</option><option value="vscode">VS Code</option></select></label>
+            </div>
+          </details>
+        </div>
+
+        <div id="sourceStatus" class="notice source-status">Paste some text to continue.</div>
+
+        <details id="projectStarterDetails" class="project-starters">
+          <summary>Start from a project template <span class="optional">optional</span></summary>
+          <div class="details-body"><p class="muted">Load a prepared project brief, then edit anything you want before Agape starts.</p><div id="projectStarterList"></div></div>
+        </details>
+
+        <label class="full"><span>What result do you want? <small>(optional)</small></span>
+          <textarea id="task" rows="3" spellcheck="true" autocapitalize="sentences" placeholder="Example: Turn this into a bank-ready UK business plan. Keep supplied facts and research safe public gaps."></textarea>
+        </label>
+
+        <button id="analyse" class="primary large">Prepare with AI</button>
+      </div>
+
+      <div id="intakeCard" class="card hidden">
+        <div class="step-label">2 · Review</div>
+        <div class="row between">
+          <div><h2>Agape prepared the brief</h2><p id="intakeSummary" class="muted"></p></div>
+          <span id="intakeReady" class="pill">Ready</span>
+        </div>
+
+        <div id="writingCheck" class="notice writing-check hidden"></div>
+
+        <details id="missingDetails" class="notice missing-details hidden">
+          <summary id="missingSummary">Items need attention</summary>
+          <div class="details-body">
+            <div id="missingBox"></div>
+            <div id="priorityFields" class="form-grid priority-fields"></div>
+          </div>
+        </details>
+
+        <details id="extraInfoDetails" class="notice extra-info-details hidden">
+          <summary><span id="extraInfoSummary">Extra information could be gathered</span><span id="extraInfoCount" class="pill">0</span></summary>
+          <div class="details-body">
+            <p class="muted">Agape found public information that could strengthen this project. This stays collapsed unless you choose to open it.</p>
+            <div id="extraInfoList"></div>
+            <div id="extraInfoActions" class="row"><button id="findMissing">Gather public information</button></div>
+            <div id="researchProgress" class="research-progress hidden" aria-live="polite">
+              <div class="progress-head"><span id="researchStage">Preparing research</span><strong id="researchPercent">0%</strong></div>
+              <div class="progress"><span id="researchBar"></span></div>
+              <p id="researchText" class="muted">Agape is preparing the public-information search.</p>
+            </div>
+          </div>
+        </details>
+
+        <details id="allDetails">
+          <summary>Review all completed details</summary>
+          <div id="formFields" class="form-grid"></div>
+        </details>
+
+        <details id="briefChangeDetails" class="ai-change brief-change">
+          <summary>Change the brief with AI <span class="optional">optional</span></summary>
+          <div class="details-body">
+            <p class="muted">Tell Agape what to change. Unaffected facts are preserved.</p>
+            <textarea id="formRevision" rows="3" spellcheck="true" autocapitalize="sentences" placeholder="Example: Make the audience a bank lending team and change the budget to £150,000."></textarea>
+            <button id="reviseForm" class="secondary">Apply change</button>
+          </div>
+        </details>
+
+        <div id="creationOptions" class="compact-options">
+          <div><b>Creation quality</b><span id="qualityHelp" class="muted">Agape uses your saved default.</span></div>
+          <div class="quality-inline" id="qualityInline">
+            <button class="quality selected" data-quality="standard">Create Now</button>
+            <button class="quality" data-quality="gold">Gold Standard</button>
+          </div>
+          <div id="goldOptions" class="hidden"><label>Reviewers <select id="reviewerCount"><option>2</option><option selected>3</option><option>4</option><option>5</option><option>10</option></select></label></div>
+        </div>
+
+        <div class="next-row"><button id="createDocument" class="primary large">Create result</button></div>
+      </div>
+
+      <div id="progressCard" class="card hidden">
+        <div class="step-label">3 · Result</div>
+        <h2 id="progressTitle">Working…</h2>
+        <div class="progress-head"><span id="progressStage">Starting</span><strong id="progressPercent">0%</strong></div>
+        <div class="progress"><span id="progressBar"></span></div>
+        <p id="progressText">Agape is starting the work.</p>
+        <div class="row result-tools">
+          <button id="downloadManagerButton" class="secondary hidden" type="button">Download Manager</button>
+          <span id="downloadManagerBadge" class="pill hidden">0 items</span>
+        </div>
+        <section id="downloadManagerPanel" class="download-manager hidden" aria-live="polite">
+          <div class="row between">
+            <div><h3>Download Manager</h3><p class="muted">See what Agape is preparing, what is ready, download progress, estimated time remaining and what to do next.</p></div>
+            <button id="closeDownloadManager" type="button">Close</button>
+          </div>
+          <div id="downloadManagerItems"></div>
+        </section>
+        <div id="result"></div>
+        <details id="technicalDetails"><summary>Technical details</summary><pre id="tech"></pre></details>
+      </div>
+    </section>
+
+    <section id="projects" class="page"><div class="card"><div class="row between"><div><h2>Projects</h2><p class="muted">Choose a project to use it immediately as the source for a new result.</p></div><button id="recoverProjects" class="secondary">Recover past projects</button></div><div id="recoveryResult" class="notice hidden"></div><div id="projectList"></div></div></section>
+    <section id="results" class="page"><div class="card"><h2>Results & versions</h2><p class="muted">Recent work. Revisions keep the previous version.</p><div id="recent"></div></div></section>
+
+    <section id="workspace" class="page">
+      <div class="workspace-head card">
+        <div><h2>Workspace</h2><p class="muted">Files and projects on the left, the selected item in the middle, and work still to do on the right.</p></div>
+        <div class="row"><button id="workspaceRefresh" class="secondary">Refresh</button><button id="workspaceAddTodo">+ Add to-do</button></div>
+      </div>
+      <div class="workspace-grid">
+        <aside class="workspace-panel workspace-files">
+          <div class="workspace-panel-title"><span>FILES</span><button id="workspaceCollapseAll" title="Collapse folders">−</button></div>
+          <div id="workspaceTree" class="file-tree"><p class="muted">Loading projects…</p></div>
+        </aside>
+        <section class="workspace-panel workspace-editor">
+          <div class="workspace-tabbar"><span id="workspaceTab">Welcome</span></div>
+          <div id="workspacePreview" class="workspace-preview">
+            <div class="workspace-welcome"><h3>Your working area</h3><p>Select a project or result from the file tree. Agape will show its details here without opening another screen.</p><p class="muted">This is the lightweight Agape workspace. VS Code or Theia can still be opened for full code editing.</p></div>
+          </div>
+        </section>
+        <aside class="workspace-panel workspace-jobs">
+          <div class="workspace-section">
+            <div class="workspace-panel-title"><span>TO-DO</span><span id="todoCount" class="pill">0</span></div>
+            <form id="todoForm" class="todo-form hidden"><input id="todoInput" placeholder="What needs doing?" maxlength="180"><div class="row"><button type="submit" class="primary">Add</button><button type="button" id="todoCancel">Cancel</button></div></form>
+            <div id="todoList" class="todo-list"></div>
+          </div>
+          <div class="workspace-section jobs-section">
+            <div class="workspace-panel-title"><span>JOBS</span><span id="jobCount" class="pill">0</span></div>
+            <div id="workspaceJobs" class="job-list"><p class="muted">Loading jobs…</p></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <div id="workspaceContextMenu" class="context-menu hidden" role="menu" aria-label="Workspace options"></div>
+
+    <section id="settings" class="page"><div class="card">
+      <h2>Settings</h2><p class="muted">Normal use needs very few settings. Technical controls stay under Advanced.</p>
+      <div class="settings-grid">
+        <div class="setting"><h3>Experience</h3><select id="settingExperience"><option value="basic">Basic · Just do it for me</option><option value="standard">Standard · Useful choices</option><option value="advanced">Advanced · Full control</option></select><button id="saveExperience">Save</button></div>
+        <div class="setting"><h3>Default document quality</h3><select id="settingQuality"><option value="standard">Create Now · faster</option><option value="gold">Gold Standard · deeper review</option></select><button id="saveQuality">Save</button></div>
+      </div>
+      <div class="setting coding-settings"><h3>Coding tools</h3><p class="muted">Choose defaults for software work. Coding uses a coding-specialist model by default; the model, agent and code manager remain separate so you can test combinations.</p>
+        <div class="settings-grid">
+          <div class="setting"><h4>Coding model</h4><select id="settingCodingModel"><option value="auto-coding">Auto · coding specialist</option><option value="local-first">Local/open model first</option><option value="cloud-first">Cloud coding model first</option><option value="manual">Manual model choice</option></select></div>
+          <div class="setting"><h4>Coding agent</h4><select id="settingCodingAgent"><option value="auto">Auto choose</option><option value="agape-native">Agape Native</option><option value="aider">Aider</option><option value="openhands">OpenHands</option><option value="open-interpreter">Open Interpreter</option><option value="compare">Compare engines</option></select></div>
+          <div class="setting"><h4>Code manager</h4><select id="settingCodeManager"><option value="agape">Agape workspace</option><option value="theia-lite">Theia Lite</option><option value="theia-full">Theia Full</option><option value="vscode">VS Code</option></select></div>
+        </div>
+        <div class="row"><button id="saveCodingTools">Save coding defaults</button><button id="refreshCodingTools" class="secondary">Refresh status</button></div>
+        <div id="codingToolStatus" class="coding-tool-status"><p class="muted">Checking coding tools…</p></div>
+      </div>
+      <div class="setting api-key-settings"><h3>AI provider keys</h3><p class="muted">Optional. Add only the provider you use, one key at a time. Agape never shows saved key values. You can also copy <code>API-KEYS.template.json</code> to <code>API-KEYS.local.json</code> and import it.</p>
+        <div class="settings-grid">
+          <div class="setting"><h4>Provider</h4><select id="apiKeyProvider"></select></div>
+          <div class="setting"><h4>API key</h4><input id="apiKeyValue" type="password" autocomplete="off" placeholder="Paste one key here"><label class="muted"><input id="showApiKey" type="checkbox"> Show while typing</label></div>
+        </div>
+        <div class="row"><button id="saveApiKey">Save this key</button><button id="importApiKeys" class="secondary">Import API-KEYS.local.json</button><button id="refreshApiKeys" class="secondary">Refresh status</button></div>
+        <div id="apiKeyStatus" class="coding-tool-status"><p class="muted">Checking API keys…</p></div>
+      </div>
+      <div class="setting testing-tools-settings"><h3>Testing tools</h3><p class="muted">Optional specialist tools extend Agape's test coverage. Nothing here is installed silently. Use the recommended tools for broader release checks, or add heavier desktop/mobile/load tools only when you need them.</p>
+        <div class="row"><button id="refreshTestingTools" class="secondary">Refresh testing tools</button><button id="installRecommendedTesting">Install recommended test tools</button></div>
+        <div id="testingToolStatus" class="coding-tool-status"><p class="muted">Checking optional testing tools…</p></div>
+      </div>
+      <div class="setting qa-settings"><h3>Real click testing</h3><p class="muted">Run Agape in a real Chromium browser, click the major safe UI controls, verify saved settings and diagnostics, and keep screenshots plus a machine-readable report. AI submission, installers and destructive recovery actions are deliberately excluded from the safe gate.</p>
+        <div class="row"><button id="runBrowserQA">Run real UI click test</button><button id="refreshQA" class="secondary">Refresh test status</button><button id="installQAChromium" class="secondary hidden">Install test Chromium</button></div>
+        <div id="browserQAStatus" class="notice"><span class="muted">Checking browser automation…</span></div>
+        <div class="row"><button id="installDesktopQA" class="secondary hidden">Install Windows UI automation</button><button id="probeVSCode" class="secondary hidden">Test VS Code window</button><button id="probeTheia" class="secondary hidden">Test Theia window</button></div>
+        <div id="desktopQAStatus" class="notice"><span class="muted">Checking Windows desktop automation…</span></div>
+      </div>
+      <div class="setting security-setting"><h3>Approved installers</h3><p class="muted">Exact-file approvals stop applying when an installer changes.</p><div id="approvedInstallers"><p class="muted">Loading approvals…</p></div></div>
+      <details id="advancedSettings"><summary>Advanced</summary>
+        <div class="setting"><h3>AI routing</h3><p class="muted">Agape automatically chooses suitable available models.</p><select id="settingRouter"><option value="agape">Agape Router · recommended</option><option value="litellm">LiteLLM</option></select><button id="saveRouter">Save router</button></div>
+        <h3>Capabilities</h3><div id="capabilities"></div>
+        <details><summary>Computer & supporting packages</summary><div id="computer"></div></details>
+        <details><summary>Diagnostics</summary><div class="row"><button id="refreshServices">Refresh services</button><button id="refreshEvents">Refresh activity log</button></div><pre id="services"></pre><pre id="events"></pre></details>
+      </details>
+    </div></section>
+  </main>
+</div>
+
+<div id="setup" class="overlay hidden"><div class="modal">
+  <div class="setup-progress"><span class="on">1</span><span>2</span><span>3</span><span>4</span></div>
+  <div id="setup1" class="setup-step"><h2>How would you like Agape to work?</h2><div class="profiles"><button class="profile selected" data-exp="basic"><b>Basic</b><span>Just do it for me</span><small>Documents, research and automatic AI choices.</small></button><button class="profile" data-exp="standard"><b>Standard</b><span>Useful choices</span><small>Add project development, local AI and background work.</small></button><button class="profile" data-exp="advanced"><b>Advanced</b><span>Full control</span><small>Developer tools and specialist capabilities.</small></button></div><p id="recommendation" class="notice"></p><button id="setupNext" class="primary large">Continue</button></div>
+  <div id="setup2" class="setup-step hidden"><h2>Recommended for this computer</h2><p id="systemSummary"></p><div id="setupCaps"></div><button id="setupBack">Back</button><button id="setupApply" class="primary">Use these choices</button></div>
+  <div id="setup3" class="setup-step hidden"><h2>Connect an AI provider (optional)</h2><p class="muted">Add one key at a time so setup stays clear. You can skip this completely, use local models, or add keys later in Settings.</p><div class="setting"><label>Provider</label><select id="setupKeyProvider"></select></div><div class="setting"><label>API key</label><input id="setupKeyValue" type="password" autocomplete="off" placeholder="Paste one key"><label class="muted"><input id="setupShowKey" type="checkbox"> Show while typing</label></div><div class="row"><button id="setupSaveKey" class="primary">Save this key</button><button id="setupImportKeys" class="secondary">Import API-KEYS.local.json</button></div><div id="setupKeyStatus" class="notice muted">No key is required to continue.</div><div class="row"><button id="setupKeysContinue" class="primary large">Continue</button></div></div>
+  <div id="setup4" class="setup-step hidden"><h2>Agape is ready</h2><p>Source → Review → Result. Agape handles the technical choices.</p><button id="finishSetup" class="primary large">Start Agape</button></div>
+</div></div>
+
+<script src="/project_templates.js"></script>
+<script src="/app.js"></script>
+</body></html>

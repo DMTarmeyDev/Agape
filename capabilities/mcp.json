@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "id": "mcp",
+  "name": "MCP connectors",
+  "summary": "Future standards-based connector host. Preserved as an advanced capability slot.",
+  "category": "connectors",
+  "profiles": [
+    "advanced"
+  ],
+  "hidden": false,
+  "service": null,
+  "python_modules": [],
+  "support": [],
+  "permissions": [
+    "explicit MCP server permissions"
+  ],
+  "install_policy": "future"
+}

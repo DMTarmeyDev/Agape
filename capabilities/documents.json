@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "id": "documents",
+  "name": "Documents",
+  "summary": "Create, repair, review and export professional documents.",
+  "category": "work",
+  "profiles": [
+    "basic",
+    "standard",
+    "advanced"
+  ],
+  "hidden": false,
+  "service": {
+    "id": "documents",
+    "port": 8800
+  },
+  "python_modules": [],
+  "support": [
+    {
+      "kind": "pip",
+      "package": "python-docx",
+      "label": "Word document support",
+      "when": "when DOCX import/export is used"
+    },
+    {
+      "kind": "pip",
+      "package": "pypdf",
+      "label": "PDF text support",
+      "when": "when PDF files are used"
+    },
+    {
+      "kind": "pip",
+      "package": "openpyxl",
+      "label": "Excel support",
+      "when": "when XLSX files are used"
+    },
+    {
+      "kind": "pip",
+      "package": "python-pptx",
+      "label": "PowerPoint support",
+      "when": "when PPTX files are used"
+    },
+    {
+      "kind": "winget",
+      "package": "libreoffice",
+      "label": "LibreOffice document engine",
+      "when": "when editable office conversion is required"
+    }
+  ],
+  "permissions": [
+    "selected project files",
+    "AI network only when configured",
+    "LibreOffice subprocess when required"
+  ],
+  "install_policy": "on-demand"
+}

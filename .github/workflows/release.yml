@@ -1,0 +1,136 @@
+name: Build release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install QA dependencies
+        run: |
+          python -m pip install -U pip pytest playwright
+          python -m playwright install --with-deps chromium
+      - name: Public release audit
+        run: python scripts/public_audit.py
+      - name: Regression tests
+        env:
+          AGAPE_MAINFRAME_DATA: ${{ runner.temp }}/agape-test-data
+          AGAPE_SECURITY_ROOT: ${{ runner.temp }}/agape-test-security
+        run: python -m pytest -q tests
+      - name: Full dummy-data user-flow QA
+        env:
+          AGAPE_MAINFRAME_DATA: ${{ runner.temp }}/agape-full-qa-mainframe
+          AGAPE_SECURITY_ROOT: ${{ runner.temp }}/agape-full-qa-security
+        run: python scripts/full_dummy_qa.py --output "${{ runner.temp }}/agape-full-qa"
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-full-dummy-qa
+          path: |
+            ${{ runner.temp }}/agape-full-qa/FULL-QA-REPORT.json
+            ${{ runner.temp }}/agape-full-qa/full-qa-final.png
+  build:
+    needs: qa
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: windows
+          - os: macos-latest
+            artifact: macos
+          - os: ubuntu-latest
+            artifact: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install build dependencies
+        run: |
+          python -m pip install -U pip
+          python -m pip install -r requirements-build.txt
+      - name: Public release audit
+        run: python scripts/public_audit.py
+      - name: Test
+        env:
+          AGAPE_MAINFRAME_DATA: ${{ runner.temp }}/agape-test-data
+          AGAPE_SECURITY_ROOT: ${{ runner.temp }}/agape-test-security
+        run: python -m pytest -q tests
+      - name: Build Windows EXE
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          pyinstaller --noconfirm --clean --onefile --windowed --name Agape-Windows --collect-all keyring --add-data "web;web" --add-data "capabilities;capabilities" --add-data "recovered/agape-document-studio;recovered/agape-document-studio" --add-data "recovered/unified-r24;recovered/unified-r24" main.py
+          $env:AGAPE_MAINFRAME_DATA = Join-Path $env:RUNNER_TEMP 'agape-frozen-smoke'
+          $doc = Start-Process -FilePath ./dist/Agape-Windows.exe -ArgumentList '--agape-internal-service','document-studio','--port','18851','--no-browser' -PassThru
+          $wf = Start-Process -FilePath ./dist/Agape-Windows.exe -ArgumentList '--agape-internal-service','workflow-bridge','--port','18852' -PassThru
+          try {
+            $docReady=$false; $wfReady=$false
+            for($i=0; $i -lt 80; $i++) {
+              if (!$docReady) { try { $r=Invoke-RestMethod http://127.0.0.1:18851/api/health -TimeoutSec 2; $docReady=($r.version -eq 'R31.16') } catch {} }
+              if (!$wfReady) { try { $r=Invoke-RestMethod http://127.0.0.1:18852/api/health -TimeoutSec 2; $wfReady=($r.ok -ne $false) } catch {} }
+              if ($docReady -and $wfReady) { break }
+              Start-Sleep -Milliseconds 500
+            }
+            if (!$docReady) { throw 'PACKAGED_DOCUMENT_SERVICE_SMOKE_FAILED' }
+            if (!$wfReady) { throw 'PACKAGED_WORKFLOW_SERVICE_SMOKE_FAILED' }
+          } finally { Stop-Process -Id $doc.Id,$wf.Id -Force -ErrorAction SilentlyContinue }
+          New-Item -ItemType Directory -Force release | Out-Null
+          Copy-Item dist/Agape-Windows.exe release/Agape-Windows.exe
+          Copy-Item API-KEYS.template.json release/API-KEYS.template.json
+      - name: Build macOS app
+        if: runner.os == 'macOS'
+        run: |
+          pyinstaller --noconfirm --clean --onedir --windowed --name Agape --collect-all keyring --add-data "web:web" --add-data "capabilities:capabilities" --add-data "recovered/agape-document-studio:recovered/agape-document-studio" --add-data "recovered/unified-r24:recovered/unified-r24" main.py
+          export AGAPE_MAINFRAME_DATA="${RUNNER_TEMP}/agape-frozen-smoke"
+          ./dist/Agape.app/Contents/MacOS/Agape --agape-internal-service document-studio --port 18851 --no-browser & DOC_PID=$!
+          ./dist/Agape.app/Contents/MacOS/Agape --agape-internal-service workflow-bridge --port 18852 & WF_PID=$!
+          trap 'kill $DOC_PID $WF_PID 2>/dev/null || true' EXIT
+          python scripts/smoke_packaged_services.py --document-url http://127.0.0.1:18851 --workflow-url http://127.0.0.1:18852
+          kill $DOC_PID $WF_PID 2>/dev/null || true
+          trap - EXIT
+          mkdir -p release
+          ditto -c -k --sequesterRsrc --keepParent dist/Agape.app release/Agape-macOS.zip
+      - name: Build Linux binary
+        if: runner.os == 'Linux'
+        run: |
+          pyinstaller --noconfirm --clean --onefile --name Agape-Linux-x86_64 --collect-all keyring --add-data "web:web" --add-data "capabilities:capabilities" --add-data "recovered/agape-document-studio:recovered/agape-document-studio" --add-data "recovered/unified-r24:recovered/unified-r24" main.py
+          export AGAPE_MAINFRAME_DATA="${RUNNER_TEMP}/agape-frozen-smoke"
+          ./dist/Agape-Linux-x86_64 --agape-internal-service document-studio --port 18851 --no-browser & DOC_PID=$!
+          ./dist/Agape-Linux-x86_64 --agape-internal-service workflow-bridge --port 18852 & WF_PID=$!
+          trap 'kill $DOC_PID $WF_PID 2>/dev/null || true' EXIT
+          python scripts/smoke_packaged_services.py --document-url http://127.0.0.1:18851 --workflow-url http://127.0.0.1:18852
+          kill $DOC_PID $WF_PID 2>/dev/null || true
+          trap - EXIT
+          mkdir -p release
+          cp dist/Agape-Linux-x86_64 release/Agape-Linux-x86_64
+          chmod +x release/Agape-Linux-x86_64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: release/*
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release
+          merge-multiple: true
+      - name: SHA-256 checksums
+        run: |
+          cd release
+          sha256sum * > SHA256SUMS.txt
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${GITHUB_REF_NAME}" release/* --repo "${GITHUB_REPOSITORY}" --title "Agape ${GITHUB_REF_NAME}" --generate-notes

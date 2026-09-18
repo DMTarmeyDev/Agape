@@ -1,0 +1,5 @@
+{
+  "name": "Real OpenRouter Catalogue Probe",
+  "required": false,
+  "cases": ["real_openrouter_catalog_optional"]
+}

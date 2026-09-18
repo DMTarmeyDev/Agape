@@ -1,61 +1,26 @@
-# Python
 __pycache__/
 *.py[cod]
-*.pyo
+.pytest_cache/
 .venv/
 venv/
-.pytest_cache/
-
-# Local/runtime data
-*.sqlite
-*.sqlite3
-*.db
-*.log
-logs/
-data/
-outputs/
-exports/
-backups/
-release-backups/
-
-# Secrets / local configuration
-.env
-.env.*
-!.env.example
-*.pem
-*.key
-*.pfx
-*.p12
-secrets.json
-credentials.json
-FIRST-LOGIN.txt
-*token*.json
-
-# OS / editor
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
-
-# Generated binaries - keep source, publish binaries as GitHub Releases later
-windows-native-r6/dist/*.exe
-windows-native-r6/setup/payload/*.exe
-windows-native-r7/dist/*.exe
-windows-native-r7/setup/payload/*.exe
-
-# Temporary/build directories
 build/
 dist/
-tmp/
-temp/
-
-# Local credentials and secrets - never commit these
+*.spec
+*.sqlite3
+*.db
 .env
-.env.*
-!.env.example
-*.pem
+.DS_Store
+Thumbs.db
+release/
+API-KEYS.local.json
+API-KEYS.local.json.*
+api-keys.json
 *.key
+*.pem
 *.p12
 *.pfx
+.env.*
+!.env.example
 credentials/
 secrets/
+.agape-validation/

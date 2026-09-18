@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "id": "work-engine",
+  "name": "Background work",
+  "summary": "Schedules, durable jobs, supervision and code intelligence.",
+  "category": "work",
+  "profiles": [
+    "standard",
+    "advanced"
+  ],
+  "hidden": false,
+  "service": {
+    "id": "work-engine",
+    "port": 8820
+  },
+  "python_modules": [],
+  "support": [],
+  "permissions": [
+    "local jobs",
+    "approved project paths"
+  ],
+  "install_policy": "on-demand"
+}

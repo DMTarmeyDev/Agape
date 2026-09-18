@@ -1,8 +1,0 @@
-{
-  "version": "R31.10",
-  "data_root": "<USER_DOCUMENTS>/DMT-CORE-V3.1/second-brain-data/document-studio",
-  "template_library": "<DATA_ROOT>/templates",
-  "output_root": "<DATA_ROOT>/outputs",
-  "port": 8800,
-  "soffice": "<AUTO-DETECT-LIBREOFFICE>"
-}

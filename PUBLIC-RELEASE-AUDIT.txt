@@ -1,0 +1,28 @@
+AGAPE V5.5 PUBLIC ALPHA RELEASE AUDIT
+
+Active tests: 111/111 PASS
+Full dummy QA: 22/22 PASS
+Browser JavaScript syntax: PASS
+Python compile: PASS
+Public release audit: PASS
+
+Public package checks:
+- No bundled SQLite/database files in the Git release tree.
+- No Python bytecode or pytest cache in the Git release tree.
+- No API-KEYS.local.json or saved api-keys.json.
+- API-KEYS.template.json contains blank values only.
+- Common token/private-key patterns are blocked by scripts/public_audit.py.
+- GitHub CI/release workflows run the public audit before release.
+- GitHub CI/release workflows run the 22-step isolated full dummy QA before release publication.
+
+V5.5 critical user-flow checks:
+- missing-information menu closed/open/fill: PASS
+- dedicated public-research progress: PASS
+- Change brief with AI closed/open/apply/auto-collapse: PASS
+- Download Manager stages/progress/ETA/instructions: PASS
+- finished DOCX real-click download + file validation: PASS
+- forced PDF download failure + Retry + file validation: PASS
+- Download again control: PASS
+- Open folder action: PASS
+- Mainframe download proxy -> active Workflow Bridge port 8852: PASS
+- browser console/page errors: 0 / 0
