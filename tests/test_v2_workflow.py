@@ -6,7 +6,7 @@ class HumanFirstWorkflowContract(unittest.TestCase):
         h=(ROOT/'web'/'index.html').read_text(encoding='utf-8')
         for marker in [
             '1 · Source','2 · Review','3 · Result','Paste text','Upload document','Saved project','Prepare with AI',
-            'Agape prepared the brief','Research missing public information','Change the brief with AI','Create Now','Gold Standard','Create result'
+            'Agape prepared the brief','Extra information could be gathered','Gather public information','Change the brief with AI','Create Now','Gold Standard','Create result'
         ]:
             self.assertIn(marker,h)
         self.assertNotIn('4 · Result',h)

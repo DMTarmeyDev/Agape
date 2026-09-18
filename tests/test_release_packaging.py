@@ -24,5 +24,5 @@ def test_build_requirements_include_service_runtime_dependencies():
 def test_version_metadata_matches_public_v55_line():
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     package = (ROOT / "agape_mainframe" / "__init__.py").read_text(encoding="utf-8")
-    assert 'version = "5.5.0"' in pyproject
-    assert '__version__ = "5.5.0"' in package
+    assert 'version = "5.6.1"' in pyproject
+    assert '__version__ = "5.6.1"' in package

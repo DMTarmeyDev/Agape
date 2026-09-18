@@ -1,0 +1,75 @@
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-4' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-6' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-115' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-123' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-144' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-240' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-248' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-269' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-285' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-381' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-107' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-136' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-261' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-277' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-389' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed

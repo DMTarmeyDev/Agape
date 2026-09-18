@@ -1,0 +1,180 @@
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-3' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 52918)
+Traceback (most recent call last):
+  File "C:\Users\DMTarmey\Agape-Latest-Complete\agape_mainframe\server.py", line 166, in do_GET
+    if u.path=="/api/coding/tools":return send_json(self,200,coding_tool_status())
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DMTarmey\Agape-Latest-Complete\agape_mainframe\server.py", line 119, in send_json
+    h.send_response(status);h.send_header("Content-Type","application/json; charset=utf-8");h.send_header("Cache-Control","no-store");h.send_header("X-Content-Type-Options","nosniff");h.send_header("Content-Length",str(len(raw)));h.end_headers();h.wfile.write(raw)
+                                                                                                                                                                                                                                                      ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 845, in write
+    self._sock.sendall(b)
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\http\server.py", line 436, in handle
+    self.handle_one_request()
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\http\server.py", line 424, in handle_one_request
+    method()
+  File "C:\Users\DMTarmey\Agape-Latest-Complete\agape_mainframe\server.py", line 195, in do_GET
+    except Exception as e:return send_json(self,500,{"error":str(e),"type":type(e).__name__})
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DMTarmey\Agape-Latest-Complete\agape_mainframe\server.py", line 119, in send_json
+    h.send_response(status);h.send_header("Content-Type","application/json; charset=utf-8");h.send_header("Cache-Control","no-store");h.send_header("X-Content-Type-Options","nosniff");h.send_header("Content-Length",str(len(raw)));h.end_headers();h.wfile.write(raw)
+                                                                                                                                                                                                                                      ^^^^^^^^^^^^^^^
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\http\server.py", line 538, in end_headers
+    self.flush_headers()
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\http\server.py", line 542, in flush_headers
+    self.wfile.write(b"".join(self._headers_buffer))
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 845, in write
+    self._sock.sendall(b)
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 64551)
+Traceback (most recent call last):
+  File "C:\Users\DMTarmey\Agape-Latest-Complete\agape_mainframe\server.py", line 160, in do_GET
+    if u.path=="/api/capabilities":return send_json(self,200,{"ok":True,"capabilities":capability_status(probe())})
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DMTarmey\Agape-Latest-Complete\agape_mainframe\server.py", line 119, in send_json
+    h.send_response(status);h.send_header("Content-Type","application/json; charset=utf-8");h.send_header("Cache-Control","no-store");h.send_header("X-Content-Type-Options","nosniff");h.send_header("Content-Length",str(len(raw)));h.end_headers();h.wfile.write(raw)
+                                                                                                                                                                                                                                                      ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 845, in write
+    self._sock.sendall(b)
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\http\server.py", line 436, in handle
+    self.handle_one_request()
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\http\server.py", line 424, in handle_one_request
+    method()
+  File "C:\Users\DMTarmey\Agape-Latest-Complete\agape_mainframe\server.py", line 195, in do_GET
+    except Exception as e:return send_json(self,500,{"error":str(e),"type":type(e).__name__})
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DMTarmey\Agape-Latest-Complete\agape_mainframe\server.py", line 119, in send_json
+    h.send_response(status);h.send_header("Content-Type","application/json; charset=utf-8");h.send_header("Cache-Control","no-store");h.send_header("X-Content-Type-Options","nosniff");h.send_header("Content-Length",str(len(raw)));h.end_headers();h.wfile.write(raw)
+                                                                                                                                                                                                                                      ^^^^^^^^^^^^^^^
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\http\server.py", line 538, in end_headers
+    self.flush_headers()
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\http\server.py", line 542, in flush_headers
+    self.wfile.write(b"".join(self._headers_buffer))
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 845, in write
+    self._sock.sendall(b)
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+----------------------------------------
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-112' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-128' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 57919)
+Traceback (most recent call last):
+  File "C:\Users\DMTarmey\Agape-Latest-Complete\agape_mainframe\server.py", line 160, in do_GET
+    if u.path=="/api/capabilities":return send_json(self,200,{"ok":True,"capabilities":capability_status(probe())})
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DMTarmey\Agape-Latest-Complete\agape_mainframe\server.py", line 119, in send_json
+    h.send_response(status);h.send_header("Content-Type","application/json; charset=utf-8");h.send_header("Cache-Control","no-store");h.send_header("X-Content-Type-Options","nosniff");h.send_header("Content-Length",str(len(raw)));h.end_headers();h.wfile.write(raw)
+                                                                                                                                                                                                                                                      ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 845, in write
+    self._sock.sendall(b)
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\http\server.py", line 436, in handle
+    self.handle_one_request()
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\http\server.py", line 424, in handle_one_request
+    method()
+  File "C:\Users\DMTarmey\Agape-Latest-Complete\agape_mainframe\server.py", line 195, in do_GET
+    except Exception as e:return send_json(self,500,{"error":str(e),"type":type(e).__name__})
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DMTarmey\Agape-Latest-Complete\agape_mainframe\server.py", line 119, in send_json
+    h.send_response(status);h.send_header("Content-Type","application/json; charset=utf-8");h.send_header("Cache-Control","no-store");h.send_header("X-Content-Type-Options","nosniff");h.send_header("Content-Length",str(len(raw)));h.end_headers();h.wfile.write(raw)
+                                                                                                                                                                                                                                      ^^^^^^^^^^^^^^^
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\http\server.py", line 538, in end_headers
+    self.flush_headers()
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\http\server.py", line 542, in flush_headers
+    self.wfile.write(b"".join(self._headers_buffer))
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 845, in write
+    self._sock.sendall(b)
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+----------------------------------------
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-229' coro=<Connection.run.<locals>.init() running at C:\Users\DMTarmey\AppData\Roaming\Python\Python312\site-packages\playwright\_impl\_connection.py:344> wait_for=<Future finished result=None>>
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 49884)
+Traceback (most recent call last):
+  File "C:\Users\DMTarmey\Agape-Latest-Complete\agape_mainframe\server.py", line 166, in do_GET
+    if u.path=="/api/coding/tools":return send_json(self,200,coding_tool_status())
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DMTarmey\Agape-Latest-Complete\agape_mainframe\server.py", line 119, in send_json
+    h.send_response(status);h.send_header("Content-Type","application/json; charset=utf-8");h.send_header("Cache-Control","no-store");h.send_header("X-Content-Type-Options","nosniff");h.send_header("Content-Length",str(len(raw)));h.end_headers();h.wfile.write(raw)
+                                                                                                                                                                                                                                                      ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 845, in write
+    self._sock.sendall(b)
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\http\server.py", line 436, in handle
+    self.handle_one_request()
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\http\server.py", line 424, in handle_one_request
+    method()
+  File "C:\Users\DMTarmey\Agape-Latest-Complete\agape_mainframe\server.py", line 195, in do_GET
+    except Exception as e:return send_json(self,500,{"error":str(e),"type":type(e).__name__})
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DMTarmey\Agape-Latest-Complete\agape_mainframe\server.py", line 119, in send_json
+    h.send_response(status);h.send_header("Content-Type","application/json; charset=utf-8");h.send_header("Cache-Control","no-store");h.send_header("X-Content-Type-Options","nosniff");h.send_header("Content-Length",str(len(raw)));h.end_headers();h.wfile.write(raw)
+                                                                                                                                                                                                                                      ^^^^^^^^^^^^^^^
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\http\server.py", line 538, in end_headers
+    self.flush_headers()
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\http\server.py", line 542, in flush_headers
+    self.wfile.write(b"".join(self._headers_buffer))
+  File "C:\Users\DMTarmey\AppData\Local\Programs\Python\Python312\Lib\socketserver.py", line 845, in write
+    self._sock.sendall(b)
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+----------------------------------------

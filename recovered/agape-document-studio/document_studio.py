@@ -1,5 +1,5 @@
 from __future__ import annotations
-import argparse, base64, csv, hashlib, html, io, json, math, mimetypes, os, re, shutil, sqlite3, subprocess, sys, tempfile, threading, time, unicodedata, urllib.parse, webbrowser, zipfile
+import argparse, base64, csv, hashlib, html, io, json, math, mimetypes, os, re, shutil, sqlite3, subprocess, sys, tempfile, threading, time, traceback, unicodedata, urllib.parse, webbrowser, zipfile
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -96,6 +96,12 @@ BUSINESS_PLAN_HEADINGS = [
     "Recommendation / Next Step","Sources / Evidence"
 ]
 for p in (DATA,TEMPLATES,GENERATED,EXTERNAL,OUTPUTS,CACHE): p.mkdir(parents=True,exist_ok=True)
+
+def ensure_runtime_paths():
+    """Recreate writable runtime directories if an old install/move removed them."""
+    for p in (DATA,TEMPLATES,GENERATED,EXTERNAL,OUTPUTS,CACHE,RESEARCH_ROOT,UPLOAD_ROOT,INSTRUCTION_UPLOAD_ROOT,USER_TEMPLATE_ROOT,BRAIN_WORKDIR,PREVIEW_ROOT):
+        p.mkdir(parents=True,exist_ok=True)
+    return {"data":str(DATA),"templates":str(TEMPLATES),"outputs":str(OUTPUTS),"brain_workdir":str(BRAIN_WORKDIR)}
 
 DEFAULT_SETTINGS = {
     "country_of_origin":"United Kingdom",
@@ -457,9 +463,21 @@ def libreoffice_version():
     return d.get("version") if d.get("installed") else None
 
 def lo_convert(src:Path,ext:str,outdir:Path):
+    # Always give LibreOffice an explicit, existing working directory.  On
+    # Windows an older Agape child process can survive a source-tree upgrade
+    # after the folder it inherited as its current working directory has moved
+    # or been replaced.  CreateProcess then raises WinError 3 before soffice
+    # even starts.  Using the per-conversion output directory makes conversion
+    # independent of the parent process current directory.
+    ensure_runtime_paths()
     s=find_soffice()
     if not s:raise RuntimeError("LibreOffice soffice executable not installed")
+    src=Path(src).expanduser().resolve()
+    outdir=Path(outdir).expanduser().resolve()
+    if not src.is_file():raise RuntimeError("Document source file no longer exists: "+str(src))
     outdir.mkdir(parents=True,exist_ok=True)
+    launch_cwd=outdir if outdir.is_dir() else Path(tempfile.gettempdir()).resolve()
+    launch_cwd.mkdir(parents=True,exist_ok=True)
     profile=Path(tempfile.mkdtemp(prefix="agape-lo-profile-"))
     try:
         uri=profile.resolve().as_uri()
@@ -468,8 +486,10 @@ def lo_convert(src:Path,ext:str,outdir:Path):
             "--outdir",str(outdir),
             str(src),
         ]
-        p=subprocess.run(
+        p=run_process_reliably(
             cmd,
+            label="LibreOffice conversion",
+            cwd=str(launch_cwd),
             capture_output=True,
             text=True,
             timeout=180,
@@ -895,13 +915,20 @@ def create_document(title,app,doc_type,theme,template_id,target_format,content,o
     save_dir.mkdir(parents=True,exist_ok=True)
     tmp=Path(tempfile.mkdtemp(prefix="agape-open-doc-"));primary=tmp/(base+"."+ODF_DOC_EXT[app])
     try:
-        instantiate(tpl,title,content,primary)
+        try:
+            instantiate(tpl,title,content,primary)
+        except Exception as exc:
+            raise RuntimeError(f"DOCUMENT_TEMPLATE_STAGE_FAILED: {type(exc).__name__}: {exc}") from exc
         if target_format==ODF_DOC_EXT[app]:
             out=save_dir/primary.name;shutil.copy2(primary,out);engine="ODF/odfpy"
         elif target_format=="txt":
             out=save_dir/(base+".txt");out.write_text(clean_text(content),encoding="utf-8");engine="Agape clean text"
         else:
-            converted=lo_convert(primary,target_format,tmp);out=save_dir/converted.name;shutil.copy2(converted,out);engine="LibreOffice headless"
+            try:
+                converted=lo_convert(primary,target_format,tmp)
+            except Exception as exc:
+                raise RuntimeError(f"DOCUMENT_CONVERSION_STAGE_FAILED: {type(exc).__name__}: {exc}") from exc
+            out=save_dir/converted.name;shutil.copy2(converted,out);engine="LibreOffice headless"
         audit=validate_output(out)
         add_history(title=title,app=app,doc_type=doc_type,theme=theme,template=tpl["name"],format=target_format,engine=engine,path=str(out),size_bytes=out.stat().st_size,validation=audit,source=tpl["source"])
         return {"ok":bool(audit.get("ok")),"file":str(out),"name":out.name,"engine":engine,"validation":audit,"template":tpl}
@@ -1173,12 +1200,61 @@ def _clean_cli_env(provider):
 CLI_TEXT_ENCODING="utf-8"
 CLI_TEXT_ERRORS="replace"
 
+def _safe_process_cwd(preferred=None):
+    """Return an existing absolute cwd for Windows child processes.
+
+    A stale/deleted inherited current directory is a known CreateProcess source of
+    WinError 3.  Never rely on the parent process cwd for AI/office helpers.
+    """
+    ensure_runtime_paths()
+    candidates=[]
+    if preferred:
+        candidates.append(Path(preferred))
+    candidates.extend([BRAIN_WORKDIR, DATA, Path(tempfile.gettempdir()), Path.home()])
+    for candidate in candidates:
+        try:
+            candidate=Path(candidate).expanduser().resolve()
+            candidate.mkdir(parents=True,exist_ok=True)
+            if candidate.is_dir():return candidate
+        except Exception:
+            pass
+    raise RuntimeError("NO_SAFE_CHILD_PROCESS_WORKING_DIRECTORY")
+
+def _normalise_windows_command(args):
+    args=[str(x) for x in args]
+    if os.name!="nt" or not args:return args,False
+    exe=args[0].strip('\"')
+    suffix=Path(exe).suffix.lower()
+    if suffix not in (".cmd",".bat"):
+        return args,False
+    comspec=os.environ.get("COMSPEC") or shutil.which("cmd.exe") or r"C:\\Windows\\System32\\cmd.exe"
+    return [comspec,"/d","/s","/c",subprocess.list2cmdline(args)],True
+
+def run_process_reliably(args,*,label="child-process",cwd=None,**kwargs):
+    """Run a child process with an existing cwd and one WinError-3 fallback."""
+    command,wrapped=_normalise_windows_command(args)
+    first_cwd=_safe_process_cwd(cwd)
+    try:
+        return subprocess.run(command,cwd=str(first_cwd),**kwargs)
+    except OSError as exc:
+        if getattr(exc,"winerror",None)!=3:
+            raise RuntimeError(f"{label} launch failed: {type(exc).__name__}: {exc}") from exc
+        fallback=_safe_process_cwd(Path(tempfile.gettempdir()))
+        try:
+            return subprocess.run(command,cwd=str(fallback),**kwargs)
+        except OSError as retry_exc:
+            raise RuntimeError(
+                f"{label} launch failed after WinError 3 retry; executable={command[0]!r}; "
+                f"cwd={str(first_cwd)!r}; fallback_cwd={str(fallback)!r}; error={retry_exc}"
+            ) from retry_exc
+
 def _run_cli_utf8(args,**kwargs):
-    """Run subscription CLIs with deterministic UTF-8 stdin/stdout on Windows."""
+    """Run subscription CLIs with deterministic UTF-8 and safe Windows cwd handling."""
     kwargs["text"]=True
     kwargs["encoding"]=CLI_TEXT_ENCODING
     kwargs["errors"]=CLI_TEXT_ERRORS
-    return subprocess.run(args,**kwargs)
+    cwd=kwargs.pop("cwd",None)
+    return run_process_reliably(args,label="AI provider CLI",cwd=cwd,**kwargs)
 
 def _cli_executable_valid(exe):
     value=str(exe or "").strip()
@@ -2625,10 +2701,15 @@ def ai_fill_form(d):
     if force_fill:
         system += """\nThe user pressed COMPLETE FORM WITH BEST AI MODEL. Fill EVERY FORM_SCHEMA field. Preserve every supplied/typed field exactly. For any field that is irrelevant, unavailable, private, unknowable or not responsibly inferable, set value exactly to \"None\" rather than leaving it blank or inventing information. No field may be unresolved. Return a useful project_name/title plus valid app, doc_type, theme, template_id, format and filename so the form is ready to create."""
 
+    research_evidence=d.get("research_evidence") if isinstance(d.get("research_evidence"),dict) else {}
+    evidence_text=_research_for_prompt(research_evidence,32000) if research_evidence else ""
+    if evidence_text:
+        system += "\nPUBLIC RESEARCH EVIDENCE is supplied below. Public factual additions must be grounded in that evidence and should retain source URLs. Do not convert guesses into facts."
     prompt=(
         "FORM_SCHEMA_AND_DESIGN_CATALOGUE:\n"+json.dumps(schema,ensure_ascii=False)+
         "\n\nCURRENT_FORM_AND_SOURCE_CONTEXT:\n"+json.dumps(_ai_context_snapshot(ctx,72000,48,True),ensure_ascii=False)+
         "\n\nLOCKED_USER_TYPED_FIELDS:\n"+json.dumps(ctx.get("structured_form") or {},ensure_ascii=False)+
+        ("\n\nPUBLIC_RESEARCH_EVIDENCE:\n"+evidence_text if evidence_text else "")+
         "\n\nReturn exactly one JSON object with this structure: "
         "{project_name,title, fields:{FIELD_ID:{value,status,confidence,reason,sources:[{title,url}]}}, "
         "design:{app,doc_type,theme,template_id,format,filename,reason}, "
@@ -3033,6 +3114,42 @@ def route_research(question,preferred_sources=None,depth="balanced"):
     dedup.sort(key=lambda x:x.get("utility_score",0),reverse=True)
     return dedup[:limit]
 
+def public_research(d):
+    ensure_runtime_paths()
+    depth=str(d.get("research_depth") or d.get("depth") or "balanced").strip().lower()
+    if depth not in {"quick","balanced","deep"}: depth="balanced"
+    raw=d.get("questions") or []
+    questions=[]
+    for item in raw[:6]:
+        if isinstance(item,str): q=item; preferred=[]
+        elif isinstance(item,dict): q=str(item.get("question") or "").strip(); preferred=item.get("preferred_sources") or []
+        else: continue
+        if q: questions.append({"question":q,"preferred_sources":preferred})
+    if not questions:
+        context=str(d.get("context") or d.get("title") or "this project").strip()
+        questions=[{"question":"Find current reliable public information that could materially improve this project: "+context[:1200],"preferred_sources":["official","primary","current"]}]
+    results=[None]*len(questions)
+    def one(index,item):
+        return index, route_research(item["question"],item.get("preferred_sources") or [],depth)
+    with ThreadPoolExecutor(max_workers=min(4,len(questions))) as pool:
+        futures=[pool.submit(one,i,item) for i,item in enumerate(questions)]
+        for fut in as_completed(futures):
+            try:
+                i,rows=fut.result(); results[i]=rows
+            except Exception:
+                pass
+    all_sources=[]; qrows=[]
+    for item,rows in zip(questions,results):
+        rows=rows or []; qrows.append({**item,"results":rows}); all_sources.extend(rows)
+    unique=[]; seen=set()
+    for row in sorted(all_sources,key=lambda x:float(x.get("utility_score") or 0),reverse=True):
+        url=str(row.get("url") or "").strip()
+        if not url or url in seen: continue
+        seen.add(url); unique.append(row)
+    return {"ok":True,"title":str(d.get("title") or ""),"depth":depth,"questions":qrows,"sources":unique[:30],
+            "questions_researched":len(questions),"sources_checked":len(all_sources),"useful_sources":len(unique[:30]),
+            "search_providers":sorted({str(x.get("search_provider") or "") for x in unique if x.get("search_provider")})}
+
 def build_research_package(plan,ctx):
     depth=ctx["automation"].get("research_depth") or "balanced";upload_sources=[]
     if bool((ctx.get("automation") or {}).get("rag_enabled")):
@@ -3240,7 +3357,7 @@ def agent_create_document(d, progress=None):
         report(82,"Validation warning; required sections present")
     else:
         report(82,"Validation repair could not restore required sections")
-        raise RuntimeError("GENERATED_DOCUMENT_VALIDATION_FAILED="+json.dumps({"missing":audit.get("missing"),"short":audit.get("short")},ensure_ascii=False))
+        raise RuntimeError("GENERATED_DOCUMENT_VALIDATION_FAILED="+json.dumps({"missing":audit.get("missing"),"short":audit.get("short"),"duplicates":audit.get("duplicates"),"artifacts":audit.get("artifacts")},ensure_ascii=False))
     folder=plan.get("folder") or safe_name(title);filename=plan.get("filename") or safe_name(title)
     target_format=str(d.get("format") or ctx["current_selection"]["format"] or "odt")
     report(88,"Building the document file")
@@ -3318,14 +3435,19 @@ def _agent_create_job_worker(job_id,payload):
     stop_event=threading.Event()
     heartbeat=threading.Thread(target=_agent_create_job_heartbeat,args=(job_id,stop_event),daemon=True)
     heartbeat.start()
+    current_stage='Reading project brief'
     try:
         def report(percent,stage):
-            _agent_create_job_update(job_id,state='working',progress=percent,stage=stage,message=stage)
-        _agent_create_job_update(job_id,state='working',progress=4,stage='Reading project brief',message='Reading project brief')
+            nonlocal current_stage
+            current_stage=str(stage or current_stage)
+            _agent_create_job_update(job_id,state='working',progress=percent,stage=current_stage,message=current_stage)
+        _agent_create_job_update(job_id,state='working',progress=4,stage=current_stage,message=current_stage)
         result=agent_create_document(payload,progress=report)
         _agent_create_job_update(job_id,state='ready',progress=100,stage='Document ready',message='Document ready',result=result)
     except Exception as e:
-        _agent_create_job_update(job_id,state='failed',progress=100,stage='Document creation failed',message='Document creation failed',error=str(e))
+        detail=f"{current_stage}: {type(e).__name__}: {e}"
+        trace=traceback.format_exc()[-5000:]
+        _agent_create_job_update(job_id,state='failed',progress=100,stage='Document creation failed',message='Document creation failed',error=detail,error_stage=current_stage,error_type=type(e).__name__,traceback=trace)
     finally:
         stop_event.set()
 
@@ -4593,7 +4715,7 @@ class Handler(BaseHTTPRequestHandler):
         u=urllib.parse.urlparse(self.path)
         if u.path=="/":
             raw=HTML.encode("utf-8");self.send_response(200);self.send_header("Content-Type","text/html; charset=utf-8");self.send_header("Content-Length",str(len(raw)));self.end_headers();self.wfile.write(raw);return
-        if u.path=="/api/health":return json_response(self,200,{"ok":True,"app":APP_NAME,"version":VERSION,"build_id":"R31.16-targeted-validation-repair","pid":os.getpid(),"create_page":"document-first-technical-options-in-settings","online_ai_connections":"top-10-auth-mode-radios-secure-keyring-team-connect","multi_ai_review":"independent-panel-plus-lead-editor-accept-recreate","codex_adapter":"jsonl-turn-completion-v1","form_completion_mode":"ranked-whole-run-failover-preserve-user-all-17-required","form_suggestions":"instant-scroll-chips","template_preview":"exact-template-rich-demo-pdf","progress_bar":"green-percent-stage-working-red-stalled","subscription_session_hold":"active-server-session-8h","login_helper_cleanup":"auto-after-auth-agape-controlled-helper","local_engine_autostart":"ollama-on-model-select","source_context":"dual-ingestion-rag-aware-v1","document_ingestion":"direct-llamaindex-langchain","rag_retrieval":"optional-local-bm25-style-top-k","generation_error_gate":"nonblocking","ui_encoding":"utf8-ascii-separators","provider_selection":"explicit-strict-auto-failover","control_template_filter":"v1","engine":libreoffice_detail()})
+        if u.path=="/api/health":return json_response(self,200,{"ok":True,"app":APP_NAME,"version":VERSION,"build_id":"R31.16-document-path-reliability-r2.2","pid":os.getpid(),"create_page":"document-first-technical-options-in-settings","online_ai_connections":"top-10-auth-mode-radios-secure-keyring-team-connect","multi_ai_review":"independent-panel-plus-lead-editor-accept-recreate","codex_adapter":"jsonl-turn-completion-v1","form_completion_mode":"ranked-whole-run-failover-preserve-user-all-17-required","form_suggestions":"instant-scroll-chips","template_preview":"exact-template-rich-demo-pdf","progress_bar":"green-percent-stage-working-red-stalled","subscription_session_hold":"active-server-session-8h","login_helper_cleanup":"auto-after-auth-agape-controlled-helper","local_engine_autostart":"ollama-on-model-select","source_context":"dual-ingestion-rag-aware-v1","document_ingestion":"direct-llamaindex-langchain","rag_retrieval":"optional-local-bm25-style-top-k","generation_error_gate":"nonblocking","ui_encoding":"utf8-ascii-separators","provider_selection":"explicit-strict-auto-failover","control_template_filter":"v1","engine":libreoffice_detail()})
         if u.path=="/api/runtime-status":return json_response(self,200,runtime_detail())
         if u.path=="/api/ai-status":return json_response(self,200,ai_status())
         if u.path=="/api/local-engine/status":return json_response(self,200,ollama_engine_status())
@@ -4636,6 +4758,9 @@ class Handler(BaseHTTPRequestHandler):
             if u.path=="/api/ai-build-instruction-brief":
                 d=self.body()
                 return json_response(self,200,ai_build_instruction_brief(d))
+            if u.path=="/api/public-research":
+                d=self.body()
+                return json_response(self,200,public_research(d))
             if u.path=="/api/ai-fill-form":
                 d=self.body()
                 return json_response(self,200,ai_fill_form(d))
@@ -4698,7 +4823,7 @@ class Handler(BaseHTTPRequestHandler):
             if u.path=="/api/sources/refresh":return json_response(self,200,{"ok":True,"sources":test_sources()})
             if u.path=="/api/templates/install-open":return json_response(self,200,{"ok":True,"manifest":install_external_templates()})
             if u.path=="/api/libreoffice/open":
-                s=find_soffice();subprocess.Popen([s],close_fds=True) if s else None;return json_response(self,200,{"ok":bool(s),"soffice":s,"visible_launch":True})
+                s=find_soffice();ensure_runtime_paths();subprocess.Popen([s],cwd=str(DATA),close_fds=True) if s else None;return json_response(self,200,{"ok":bool(s),"soffice":s,"visible_launch":True})
             if u.path=="/api/folder/open":
                 if os.name=="nt":subprocess.Popen(["explorer.exe",str(OUTPUTS)])
                 else:subprocess.Popen(["xdg-open",str(OUTPUTS)])
@@ -4823,13 +4948,28 @@ def _r310_min_section_chars(doc_type, heading):
         return 120
     return 80
 
+def _sanitize_generated_draft(content):
+    text=str(content or "")
+    # Never allow internal generation/safety labels to leak into a client file.
+    text=re.sub(r"(?im)^\s*User Safety:\s*safe\s*$", "", text)
+    # The office renderer understands heading levels 1-3.  Normalise deeper raw
+    # markdown headings instead of printing literal #### markers in Word/PDF.
+    text=re.sub(r"(?m)^\s*#{4,}\s+", "### ", text)
+    return re.sub(r"\n{3,}", "\n\n", text).strip()
+
 def validate_generated_document(doc_type, content, required_sections):
+    content=_sanitize_generated_draft(content)
     required = _r310_normalise_sections(required_sections)
     heads = parse_headings(content)
-    found_keys = {_r310_heading_key(x) for x in heads}
+    counts = {}
+    for heading in heads:
+        key=_r310_heading_key(heading)
+        if key:counts[key]=counts.get(key,0)+1
+    found_keys=set(counts)
     missing = [h for h in required if _r310_heading_key(h) not in found_keys]
+    duplicates = [h for h in required if counts.get(_r310_heading_key(h),0)>1]
     bodies = {}
-    blocks = re.split(r"(?m)^#{1,3}\s+", str(content or ""))[1:]
+    blocks = re.split(r"(?m)^#{1,3}\s+", content)[1:]
     for block in blocks:
         lines = block.splitlines()
         heading = _r310_display_text(clean_inline(lines[0]) if lines else "")
@@ -4842,7 +4982,9 @@ def validate_generated_document(doc_type, content, required_sections):
         key = _r310_heading_key(h)
         if key in found_keys and len(bodies.get(key, "")) < _r310_min_section_chars(doc_type, h):
             short.append(h)
-    return {"ok": not missing and not short, "headings": heads, "missing": missing, "short": short, "chars": len(str(content or ""))}
+    artifacts=[]
+    if re.search(r"(?im)^\s*User Safety:\s*safe\s*$", str(content or "")):artifacts.append("User Safety: safe")
+    return {"ok": not missing and not short and not duplicates and not artifacts, "headings": heads, "missing": missing, "short": short, "duplicates": duplicates, "artifacts": artifacts, "chars": len(content)}
 
 def _r310_markdown_blocks(text):
     return list(re.finditer(r"(?ms)^(#{1,3})\s+(.+?)\s*\n(.*?)(?=^#{1,3}\s+|\Z)", str(text or "")))
@@ -4855,26 +4997,27 @@ def _merge_repaired_sections(draft, patch, targets):
         key = _r310_heading_key(heading)
         if key in target_keys:
             patch_map[key] = "# " + heading + "\n" + match.group(3).strip()
-    if not patch_map:
-        return draft
     matches = _r310_markdown_blocks(draft)
     if not matches:
-        return draft.rstrip() + "\n\n" + "\n\n".join(patch_map.values())
+        suffix="\n\n".join(patch_map.values())
+        return (draft.rstrip() + ("\n\n"+suffix if suffix else "")).strip()
     prefix = draft[:matches[0].start()].rstrip()
     out = [prefix] if prefix else []
     used = set()
     for match in matches:
         heading = _r310_display_text(match.group(2)).strip()
         key = _r310_heading_key(heading)
-        if key in patch_map:
-            if key not in used:
-                out.append(patch_map[key]); used.add(key)
+        if key in target_keys:
+            if key in used:
+                continue
+            out.append(patch_map.get(key, match.group(0).strip()))
+            used.add(key)
             continue
         out.append(match.group(0).strip())
     for key, block in patch_map.items():
         if key not in used:
             out.append(block)
-    return "\n\n".join(x for x in out if x).strip()
+    return _sanitize_generated_draft("\n\n".join(x for x in out if x))
 
 def _r316_section_body(text, heading):
     target = _r310_heading_key(heading)
@@ -4898,17 +5041,18 @@ def _r316_repair_target_chars(doc_type, heading):
 
 
 def _r316_short_only_warning(audit):
-    return bool(audit and not (audit.get("missing") or []) and (audit.get("short") or []))
+    return bool(audit and not (audit.get("missing") or []) and not (audit.get("duplicates") or []) and not (audit.get("artifacts") or []) and (audit.get("short") or []))
 
 
 def repair_draft(ctx, plan, research, draft, requested_model="auto", max_rounds=2):
     sections = _required_sections(plan); models = []
     doc_type = plan.get("doc_type")
+    draft = _sanitize_generated_draft(draft)
     for round_index in range(max(1, int(max_rounds))):
         audit = validate_generated_document(doc_type, draft, sections)
         needs = []
         seen = set()
-        for h in audit.get("missing", []) + audit.get("short", []):
+        for h in audit.get("missing", []) + audit.get("short", []) + audit.get("duplicates", []):
             key = _r310_heading_key(h)
             if key and key not in seen:
                 needs.append(h); seen.add(key)
@@ -4959,9 +5103,16 @@ def repair_draft(ctx, plan, research, draft, requested_model="auto", max_rounds=
             if patch:
                 draft = _merge_repaired_sections(draft, patch, [heading])
 
+        draft = _sanitize_generated_draft(draft)
         audit = validate_generated_document(doc_type, draft, sections)
         if audit.get("ok"):
             return draft, audit, models
+    # Last defensive pass: collapse any duplicate required sections to one copy
+    # rather than shipping two competing versions of the same business plan.
+    final_audit=validate_generated_document(doc_type,draft,sections)
+    if final_audit.get("duplicates"):
+        draft=_merge_repaired_sections(draft,"",final_audit.get("duplicates") or [])
+    draft=_sanitize_generated_draft(draft)
     return draft, validate_generated_document(doc_type, draft, sections), models
 
 # AGAPE_R31_10_RELIABILITY_FIXES_END

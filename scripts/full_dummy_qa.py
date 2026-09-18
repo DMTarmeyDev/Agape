@@ -76,7 +76,7 @@ FIELDS = [
 
 def base_intake() -> dict[str, Any]:
     values = {
-        'organisation_proposer':'Northstar Workplace Ltd','recipient_decision_maker':'Regional lending committee',
+        'organisation_proposer':'Northstar Workplace Ltd','recipient_decision_maker':'None',
         'industry_sector':'Commercial interiors and flooring','market_geography':'North West England',
         'product_service':'Commercial flooring installation and workspace refurbishment',
         'problem_need':'Customers need reliable fit-out delivery with clearer programme and cost control.',
@@ -89,17 +89,36 @@ def base_intake() -> dict[str, Any]:
     }
     fields={}
     for key in FIELDS:
-        value=values[key]; fields[key]={'value':value,'status':'unresolved' if value=='None' else 'supplied','reason':'Needs public research' if value=='None' else 'Source document'}
+        value=values[key]
+        reason='Recipient must come from the user' if key=='recipient_decision_maker' else ('Needs public research' if value=='None' else 'Source document')
+        fields[key]={'value':value,'status':'unresolved' if value=='None' else 'supplied','reason':reason}
     return {
-        'id':'QA-INTAKE-1','project_id':0,'field_count':17,'established_count':15,'ai_fill':{'fields':fields},
-        'unresolved_questions':[{'field_id':'competitors_alternatives','question':'Which alternatives should be compared?'},{'field_id':'research_focus','question':'Which public evidence should be researched?'}],
+        'id':'QA-INTAKE-1','project_id':0,'field_count':17,'established_count':14,'ai_fill':{'fields':fields},
+        'unresolved_questions':[
+            {'field_id':'recipient_decision_maker','question':'Who is the intended decision-maker?','researchable':False},
+            {'field_id':'competitors_alternatives','question':'Which alternatives should be compared?','researchable':True},
+            {'field_id':'research_focus','question':'Which public evidence should be researched?','researchable':True},
+        ],
+        'extra_information_opportunities':[
+            {'field_id':'competitors_alternatives','label':'Competitors / alternatives','question':'Find current competitors.','reason':'Public competitor evidence could strengthen the project.','researchable':True},
+            {'field_id':'research_focus','label':'Additional useful public information','question':'Find current market and industry evidence.','reason':'Current public evidence could strengthen the project.','researchable':True},
+        ],
         'upload':{'writing_check':{'ok':True,'safe_corrections_applied':2,'spelling_issue_count':2,'grammar_issue_count':2,'structured_lines_skipped':1,'dictionary_available':True,'spelling_suggestions':[{'word':'buget','suggestion':'budget'}],'grammar_suggestions':[{'text':'we was planning growth','suggestion':'Consider: we were planning growth'}]}},
     }
 
 
 def improved_intake(row: dict[str, Any]) -> dict[str, Any]:
-    out=json.loads(json.dumps(row)); out['ai_fill']['fields']['competitors_alternatives']={'value':'Local fit-out contractors, direct flooring specialists and in-house procurement','status':'researched','reason':'Public research QA result'}
-    out['established_count']=16; out['unresolved_questions']=[{'field_id':'research_focus','question':'Confirm the preferred research focus.'}]; return out
+    out=json.loads(json.dumps(row))
+    out['ai_fill']['fields']['competitors_alternatives']={'value':'Local fit-out contractors, direct flooring specialists and in-house procurement','status':'researched','reason':'Public research QA result'}
+    out['ai_fill']['fields']['research_focus']={'value':'Current UK commercial interiors demand, lending context and competitor positioning','status':'researched','reason':'Public research QA result'}
+    questions=[]
+    recipient=out['ai_fill']['fields'].get('recipient_decision_maker',{})
+    if str(recipient.get('value') or '').strip().lower() in {'','none'}:
+        questions.append({'field_id':'recipient_decision_maker','question':'Who is the intended decision-maker?','researchable':False})
+    out['unresolved_questions']=questions
+    out['extra_information_opportunities']=[]
+    out['established_count']=17-len(questions)
+    return out
 
 
 def revised_intake(row: dict[str, Any]) -> dict[str, Any]:
@@ -157,7 +176,7 @@ class FakeDocumentStudio(BaseHTTPRequestHandler):
     def log_message(self,*args): return
     def do_GET(self):
         if self.path.startswith('/api/health'):
-            raw=json.dumps({'ok':True,'version':'R31.16'}).encode(); self.send_response(200); self.send_header('Content-Type','application/json'); self.send_header('Content-Length',str(len(raw))); self.end_headers(); self.wfile.write(raw); return
+            raw=json.dumps({'ok':True,'version':'R31.16','build_id':'R31.16-document-path-reliability-r2.2'}).encode(); self.send_response(200); self.send_header('Content-Type','application/json'); self.send_header('Content-Length',str(len(raw))); self.end_headers(); self.wfile.write(raw); return
         self.send_error(404)
 
 
@@ -226,8 +245,8 @@ def run(output_root:Path|None=None)->dict[str,Any]:
                 if str(prepared.get('status','')).upper() in {'FAIL','FAILED','ERROR'}: raise AssertionError(prepared)
                 time.sleep(.1)
             intake=(prepared.get('result') or {}).get('intake') or (prepared.get('result') or {}); assert intake.get('id')=='QA-INTAKE-1'
-            _http_json('POST',base+'/api/intake/QA-INTAKE-1/answers',{'answers':{'research_focus':'Research UK demand and competitor positioning.'}})
-            st,improved,_=_http_json('POST',base+'/api/intake/QA-INTAKE-1/improve',{}); assert st==200 and (improved.get('intake') or improved)['established_count']==16
+            _http_json('POST',base+'/api/intake/QA-INTAKE-1/answers',{'answers':{'recipient_decision_maker':'Regional lending committee','research_focus':'Research UK demand and competitor positioning.'}})
+            st,improved,_=_http_json('POST',base+'/api/intake/QA-INTAKE-1/improve',{}); assert st==200 and (improved.get('intake') or improved)['established_count']==17
             st,revised,_=_http_json('POST',base+'/api/intake/QA-INTAKE-1/revise',{'instruction':'Use a formal bank lending tone.'}); assert st==200 and 'bank lending' in (revised.get('intake') or revised)['ai_fill']['fields']['tone']['value'].lower()
             st,run,_=_http_json('POST',base+'/api/run',{'task':'Create a bank-ready expansion business plan.','intake_id':'QA-INTAKE-1','file_name':'prepared-intake.txt','quality':'standard','also_pdf':True}); assert st==202 and run.get('job_id')=='QA-JOB-1'
             deadline=time.time()+15; job=None
@@ -311,8 +330,11 @@ def run(output_root:Path|None=None)->dict[str,Any]:
   const improve = row => {{
     const out = JSON.parse(JSON.stringify(row));
     out.ai_fill.fields.competitors_alternatives = {{value:'Local fit-out contractors, direct flooring specialists and in-house procurement',status:'researched',reason:'Public research QA result'}};
-    out.established_count = 16;
-    out.unresolved_questions = [{{field_id:'research_focus',question:'Confirm the preferred research focus.'}}];
+    out.ai_fill.fields.research_focus = {{value:'Current UK commercial interiors demand, lending context and competitor positioning',status:'researched',reason:'Public research QA result'}};
+    const recipient = String(out.ai_fill.fields.recipient_decision_maker?.value || '').trim().toLowerCase();
+    out.unresolved_questions = recipient && recipient !== 'none' ? [] : [{{field_id:'recipient_decision_maker',question:'Who is the intended decision-maker?',researchable:false}}];
+    out.extra_information_opportunities = [];
+    out.established_count = 17 - out.unresolved_questions.length;
     return out;
   }};
   const revise = row => {{
@@ -385,8 +407,10 @@ def run(output_root:Path|None=None)->dict[str,Any]:
 """
             html = (ROOT/'web'/'index.html').read_text(encoding='utf-8')
             css = (ROOT/'web'/'styles.css').read_text(encoding='utf-8')
+            project_templates_js = (ROOT/'web'/'project_templates.js').read_text(encoding='utf-8').replace('</script>', '<\\/script>')
             app_js = (ROOT/'web'/'app.js').read_text(encoding='utf-8').replace('</script>', '<\\/script>')
             html = html.replace('<link rel="stylesheet" href="/styles.css">', '<style>'+css+'</style>')
+            html = html.replace('<script src="/project_templates.js"></script>', '<script>'+project_templates_js+'</script>')
             html = html.replace('<script src="/app.js"></script>', mock_fetch_js+'<script>'+app_js+'</script>')
             def open_inline_ui():
                 page.set_content(html, wait_until='load', timeout=30000)
@@ -398,10 +422,17 @@ def run(output_root:Path|None=None)->dict[str,Any]:
             _record(report,'prepare_with_ai',lambda:(page.locator('#analyse').click(),page.locator('#intakeCard').wait_for(state='visible',timeout=15000),page.locator('#intakeSummary').inner_text())[-1],'browser')
             _record(report,'missing_menu_closed_by_default',lambda:(_ for _ in ()).throw(AssertionError('missing menu unexpectedly open')) if page.locator('#missingDetails').get_attribute('open') is not None else page.locator('#missingSummary').inner_text(),'browser')
             _record(report,'open_missing_menu',lambda:(page.locator('#missingSummary').click(),page.locator('#missingDetails[open]').wait_for(state='visible',timeout=3000),page.locator('#priorityFields textarea').count())[-1],'browser')
-            _record(report,'fill_missing_form_field',lambda:(page.locator('[data-field="research_focus"]').fill('Research public UK commercial interiors demand, lending context and competitor positioning.'),page.locator('[data-field="research_focus"]').input_value())[-1],'browser')
+            _record(report,'fill_private_missing_field',lambda:(page.locator('[data-field="recipient_decision_maker"]').fill('Regional lending committee'),page.locator('[data-field="recipient_decision_maker"]').input_value())[-1],'browser')
+            _record(report,'extra_information_menu_collapsed_by_default',lambda:(_ for _ in ()).throw(AssertionError('extra information menu unexpectedly open')) if page.locator('#extraInfoDetails').get_attribute('open') is not None else page.locator('#extraInfoSummary').inner_text(),'browser')
+            _record(report,'open_extra_information_menu',lambda:(page.locator('#extraInfoDetails > summary').click(),page.locator('#extraInfoDetails[open]').wait_for(state='visible',timeout=3000),page.locator('#extraInfoList .research-opportunity').count())[-1],'browser')
             def research_ui():
                 page.locator('#findMissing').click(); page.locator('#researchProgress').wait_for(state='visible',timeout=3000); first=page.locator('#researchPercent').inner_text(); page.wait_for_function("document.getElementById('researchPercent').textContent==='100%'",timeout=10000); return first+' -> '+page.locator('#researchStage').inner_text()
             _record(report,'research_own_progress_bar',research_ui,'browser')
+            def extra_hidden_after_research():
+                hidden=page.locator('#extraInfoDetails').evaluate("el => el.classList.contains('hidden')")
+                if not hidden: raise AssertionError('extra information section should hide after research resolves all public gaps')
+                return 'hidden'
+            _record(report,'extra_information_hides_after_research',extra_hidden_after_research,'browser')
             _record(report,'brief_change_menu_closed',lambda:(_ for _ in ()).throw(AssertionError('brief change unexpectedly open')) if page.locator('#briefChangeDetails').get_attribute('open') is not None else 'closed','browser')
             _record(report,'open_fill_apply_brief_change',lambda:(page.locator('#briefChangeDetails summary').click(),page.locator('#formRevision').fill('Use a formal bank lending tone and preserve the £185,000 budget.'),page.locator('#reviseForm').click(),page.wait_for_function("!document.getElementById('briefChangeDetails').open",timeout=10000),'applied and collapsed')[-1],'browser')
             def create_ui():

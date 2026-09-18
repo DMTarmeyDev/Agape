@@ -1,6 +1,6 @@
 [project]
 name = "agape-mainframe"
-version = "5.5.0"
+version = "5.6.1"
 description = "Human-first Agape core shell and capability manager"
 requires-python = ">=3.11"
 

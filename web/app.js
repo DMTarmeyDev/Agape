@@ -13,6 +13,7 @@ let PROGRESS = {jobId:'', last:0, stage:'', stageChecks:0, lastChangedAt:Date.no
 let MAINFRAME_INSTANCE = '';
 let MAINFRAME_BUILD = '';
 let RESEARCH_PROGRESS = {timer:null, startedAt:0, percent:0};
+let LAST_EXTRA_INTAKE_ID = '';
 let DOWNLOAD_MANAGER = {
   open:false, jobId:'', startedAt:0,
   preparation:{name:'Result preparation',status:'idle',progress:0,stage:'Waiting',instruction:'Start creating a result to see its progress here.',eta:''},
@@ -105,6 +106,17 @@ function finishResearchProgress(ok=true, message='Research complete. The brief h
   researchProgressPaint(100, ok ? 'Research complete' : 'Research stopped', message, !ok);
 }
 
+function canonicalStatusLabel(value) {
+  const raw=String(value?.status_label || value?.display_status || value?.work_status || value?.status || value || '').trim();
+  const key=raw.toUpperCase().replace(/[ -]+/g,'_');
+  if (['PASS','COMPLETE','COMPLETED','SUCCESS','DONE'].includes(key)) return 'Complete';
+  if (['BLOCKED','ACTION_REQUIRED','NEEDS_ATTENTION'].includes(key)) return 'Needs attention';
+  if (['FAIL','FAILED','ERROR'].includes(key)) return 'Failed';
+  if (['QUEUED','PENDING'].includes(key)) return 'Queued';
+  if (['RUNNING','WORKING','IN_PROGRESS','START','STARTED','UNKNOWN'].includes(key)) return 'Working';
+  return raw || 'Saved';
+}
+
 function downloadStatusLabel(status) {
   return ({preparing:'Preparing',ready:'Ready',downloading:'Downloading',completed:'Completed',failed:'Failed',idle:'Waiting'})[status] || String(status || 'Waiting');
 }
@@ -114,8 +126,54 @@ function downloadInstruction(item) {
   if (item.status === 'ready') return 'The file is ready. Press Download to save it to your computer.';
   if (item.status === 'downloading') return 'Keep this Agape window open until this file reaches 100%.';
   if (item.status === 'completed') return 'Saved successfully. You can download it again or open the folder containing Agape’s generated copy.';
+  if (item.status === 'failed' && item.kind === 'preparation') return 'Result creation stopped before a new file was produced. Fix the problem shown below, then press Create result again.';
   if (item.status === 'failed') return 'The file was not downloaded. Read the error below, then press Retry download.';
   return item.instruction || 'Waiting for Agape.';
+}
+
+const DOWNLOAD_HISTORY_KEY = 'agape.download-manager.v2';
+
+function saveDownloadManagerState() {
+  try {
+    const rows = DOWNLOAD_MANAGER.items.slice(0,80).map(x => ({...x,status:x.status==='downloading'?'ready':x.status}));
+    localStorage.setItem(DOWNLOAD_HISTORY_KEY, JSON.stringify(rows));
+  } catch {}
+}
+
+function restoreDownloadManagerState() {
+  try {
+    const rows = JSON.parse(localStorage.getItem(DOWNLOAD_HISTORY_KEY) || '[]');
+    if (Array.isArray(rows)) DOWNLOAD_MANAGER.items = rows.filter(x => x && x.jobId && Number.isFinite(Number(x.index))).slice(0,80);
+  } catch {}
+}
+
+function historyResultFiles(item) {
+  const root = item?.result || {};
+  const candidates = [root, root?.job, root?.result, root?.job?.result];
+  for (const value of candidates) {
+    if (!value || typeof value !== 'object') continue;
+    const files = Array.isArray(value.files) ? value.files : (value.file ? [value.file] : []);
+    if (files.length) return files;
+  }
+  return [];
+}
+
+async function hydrateDownloadHistory() {
+  restoreDownloadManagerState();
+  try {
+    const data = await api('/api/recent?limit=100');
+    const existing = new Set(DOWNLOAD_MANAGER.items.map(x => `${x.jobId}:${x.index}`));
+    for (const work of (data.items || [])) {
+      const jobId=String(work.external_job_id || ''); if (!jobId) continue;
+      historyResultFiles(work).forEach((file,index) => {
+        const key=`${jobId}:${index}`; if (existing.has(key)) return;
+        const rawName=typeof file==='string'?file:(file.name||file.file||file.path||`File ${index+1}`);
+        DOWNLOAD_MANAGER.items.push({index,jobId,name:String(rawName).split(/[\\/]/).pop(),projectTitle:work.title||'',status:'ready',progress:100,stage:'Saved result',eta:'Ready now',error:''});
+        existing.add(key);
+      });
+    }
+    DOWNLOAD_MANAGER.items=DOWNLOAD_MANAGER.items.slice(0,80); saveDownloadManagerState(); renderDownloadManager();
+  } catch { renderDownloadManager(); }
 }
 
 function renderDownloadManager() {
@@ -127,7 +185,10 @@ function renderDownloadManager() {
   const prep = DOWNLOAD_MANAGER.preparation;
   const rows = [];
   if (prep && prep.status !== 'idle') rows.push({...prep,kind:'preparation'});
-  DOWNLOAD_MANAGER.items.forEach(item => rows.push({...item,kind:'file'}));
+  const currentJob = String(DOWNLOAD_MANAGER.jobId || CURRENT_JOB || '');
+  DOWNLOAD_MANAGER.items
+    .filter(item => currentJob && String(item.jobId || '') === currentJob)
+    .forEach(item => rows.push({...item,kind:'file'}));
   const active = rows.filter(x => ['preparing','downloading'].includes(x.status)).length;
   const completed = rows.filter(x => ['ready','completed'].includes(x.status)).length;
   button.classList.toggle('hidden', !rows.length);
@@ -141,18 +202,21 @@ function renderDownloadManager() {
     let actions = '';
     if (row.kind === 'file') {
       const downloadText = row.status === 'completed' ? 'Download again' : row.status === 'failed' ? 'Retry download' : 'Download';
-      if (row.status !== 'downloading') actions += `<button type="button" data-dm-download="${row.index}">${downloadText}</button>`;
-      if (row.jobId) actions += `<button type="button" data-dm-open="${row.index}">Open folder</button>`;
+      if (row.status !== 'downloading') actions += `<button type="button" data-dm-download="${row.index}" data-dm-job="${esc(row.jobId||'')}">${downloadText}</button>`;
+      if (row.jobId) actions += `<button type="button" data-dm-open="${row.index}" data-dm-job="${esc(row.jobId)}">Open folder</button>`;
     }
-    return `<article class="download-item" data-status="${esc(row.status)}"><div class="download-item-head"><div><div class="download-item-name">${esc(row.name)}</div><div class="download-meta"><span class="download-status">${esc(downloadStatusLabel(row.status))}</span><span>${esc(row.stage || '')}</span>${eta ? `<span>${esc(eta)}</span>` : ''}</div></div><strong>${Math.round(pct)}%</strong></div><div class="progress"><span class="${row.status==='failed'?'failed':''}" style="width:${pct}%"></span></div><p class="download-instruction">${esc(downloadInstruction(row))}</p>${error}${actions ? `<div class="download-actions">${actions}</div>` : ''}</article>`;
+    const project = row.projectTitle ? `<span>${esc(row.projectTitle)}</span>` : '';
+    return `<article class="download-item" data-status="${esc(row.status)}"><div class="download-item-head"><div><div class="download-item-name">${esc(row.name)}</div><div class="download-meta"><span class="download-status">${esc(downloadStatusLabel(row.status))}</span>${project}<span>${esc(row.stage || '')}</span>${eta ? `<span>${esc(eta)}</span>` : ''}</div></div><strong>${Math.round(pct)}%</strong></div><div class="progress"><span class="${row.status==='failed'?'failed':''}" style="width:${pct}%"></span></div><p class="download-instruction">${esc(downloadInstruction(row))}</p>${error}${actions ? `<div class="download-actions">${actions}</div>` : ''}</article>`;
   }).join('') || '<p class="muted">No active or completed downloads yet.</p>';
-  host.querySelectorAll('[data-dm-download]').forEach(node => node.onclick = () => downloadManagedFile(DOWNLOAD_MANAGER.jobId, Number(node.dataset.dmDownload)));
-  host.querySelectorAll('[data-dm-open]').forEach(node => node.onclick = () => openGeneratedFolder(DOWNLOAD_MANAGER.jobId, Number(node.dataset.dmOpen)));
+  host.querySelectorAll('[data-dm-download]').forEach(node => node.onclick = () => downloadManagedFile(node.dataset.dmJob, Number(node.dataset.dmDownload)));
+  host.querySelectorAll('[data-dm-open]').forEach(node => node.onclick = () => openGeneratedFolder(node.dataset.dmJob, Number(node.dataset.dmOpen)));
 }
 
 function beginResultPreparation(text='Agape is preparing the result.', percent=1) {
   DOWNLOAD_MANAGER.startedAt = Date.now();
   DOWNLOAD_MANAGER.jobId = '';
+  // A new creation run owns a fresh manager view. Previous files remain in
+  // Results/history but must never look like outputs from this new job.
   DOWNLOAD_MANAGER.items = [];
   DOWNLOAD_MANAGER.preparation = {name:'Result preparation',status:'preparing',progress:Number(percent)||1,stage:'Starting',instruction:text,eta:''};
   renderDownloadManager();
@@ -176,10 +240,14 @@ function registerResultFiles(result, jobId='') {
   const files = Array.isArray(result?.files) ? result.files : (result?.file ? [result.file] : []);
   DOWNLOAD_MANAGER.jobId = jobId || DOWNLOAD_MANAGER.jobId;
   updateResultPreparation(DOWNLOAD_MANAGER.jobId, 100, 'Finished', 'Agape finished creating and validating the result.');
-  DOWNLOAD_MANAGER.items = files.map((file,index) => {
+  const title = String(INTAKE?.project_name || INTAKE?.ai_fill?.project_name || INTAKE?.ai_fill?.title || '');
+  const fresh = files.map((file,index) => {
     const rawName = typeof file === 'string' ? file : (file.name || file.file || file.path || `File ${index+1}`);
-    return {index,jobId:DOWNLOAD_MANAGER.jobId,name:String(rawName).split(/[\\/]/).pop(),status:'ready',progress:100,stage:'Ready to download',eta:'Ready now',error:''};
+    return {index,jobId:DOWNLOAD_MANAGER.jobId,projectTitle:title,name:String(rawName).split(/[\\/]/).pop(),status:'ready',progress:100,stage:'Ready to download',eta:'Ready now',error:''};
   });
+  const keys = new Set(fresh.map(x => `${x.jobId}:${x.index}`));
+  DOWNLOAD_MANAGER.items = fresh.slice(0,80);
+  saveDownloadManagerState();
   renderDownloadManager();
   return files;
 }
@@ -194,7 +262,7 @@ function filenameFromDisposition(value, fallback) {
 
 async function downloadManagedFile(jobId, index) {
   if (!jobId) return toast('This result does not have a downloadable job yet.');
-  const item = DOWNLOAD_MANAGER.items.find(x => Number(x.index) === Number(index));
+  const item = DOWNLOAD_MANAGER.items.find(x => String(x.jobId||'') === String(jobId||'') && Number(x.index) === Number(index));
   if (!item) return;
   item.status = 'downloading'; item.progress = 0; item.stage = 'Connecting'; item.eta = ''; item.error = '';
   DOWNLOAD_MANAGER.open = true; renderDownloadManager();
@@ -270,6 +338,22 @@ function page(id) {
 }
 document.querySelectorAll('nav button').forEach(button => button.onclick = () => page(button.dataset.page));
 
+let STATUS_VIEW_REFRESHING=false;
+async function refreshVisibleStatusView() {
+  if (STATUS_VIEW_REFRESHING || document.visibilityState === 'hidden') return;
+  const active=document.querySelector('.page.active')?.id || '';
+  if (!['results','projects','workspace'].includes(active)) return;
+  STATUS_VIEW_REFRESHING=true;
+  try {
+    if (active === 'results') await loadRecent();
+    else if (active === 'projects') await loadProjects();
+    else if (active === 'workspace') await loadWorkspace();
+  } finally { STATUS_VIEW_REFRESHING=false; }
+}
+setInterval(refreshVisibleStatusView, 5000);
+window.addEventListener('focus', () => refreshVisibleStatusView().catch(()=>{}));
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshVisibleStatusView().catch(()=>{}); });
+
 function setStep(step) {
   [1,2,3].forEach(n => $(`stepIndicator${n}`).classList.toggle('active', n === step));
 }
@@ -301,6 +385,36 @@ function activeSourceReady() {
   return false;
 }
 
+
+function renderProjectStarters() {
+  const select = $('sourceTemplateSelect');
+  const load = $('loadSourceTemplate');
+  const help = $('sourceTemplateHelp');
+  if (!select || !load) return;
+  const rows = Array.isArray(window.AGAPE_PROJECT_TEMPLATES) ? window.AGAPE_PROJECT_TEMPLATES : [];
+  select.innerHTML = '<option value="">Blank source</option>' + rows.map(row => `<option value="${esc(row.id)}">${esc(row.name)}</option>`).join('');
+
+  const selectedTemplate = () => rows.find(row => String(row.id) === String(select.value || '')) || null;
+  const refreshTemplateChoice = () => {
+    const row = selectedTemplate();
+    load.disabled = !row;
+    if (help) help.textContent = row ? String(row.description || 'Load this template into the editable source box.') : 'Start blank, or choose a built-in template and load it into the editable source box.';
+  };
+  select.onchange = refreshTemplateChoice;
+  load.onclick = () => {
+    const row = selectedTemplate();
+    if (!row) return;
+    const current = String($('sourceText').value || '').trim();
+    if (current && current !== String(row.source_text || '').trim() && !window.confirm('Replace the current pasted source with this template?')) return;
+    $('sourceText').value = String(row.source_text || '');
+    $('task').value = String(row.task || '');
+    setSourceMode('paste');
+    updateSourceStatus();
+    toast(`Loaded template: ${row.name}`);
+    $('sourceText').focus();
+  };
+  refreshTemplateChoice();
+}
 
 async function recoverProjects() {
   const button = $('recoverProjects');
@@ -345,13 +459,41 @@ async function loadProjects() {
   const data = await api('/api/projects').catch(() => ({projects:[]}));
   const rows = data.projects || [];
   $('project').innerHTML = '<option value="0">Choose a saved project</option>' + rows.map(p => `<option value="${Number(p.id)||0}">${esc(p.name)}</option>`).join('');
-  $('projectList').innerHTML = rows.length ? rows.map(p => `<button class="result-file" data-pid="${Number(p.id)||0}"><span><b>${esc(p.name)}</b><br><small>${esc(p.goal || p.description || 'Saved project')}</small></span><span>Use as source →</span></button>`).join('') : '<p class="muted">No saved user projects are currently available.</p>';
+  $('projectList').innerHTML = rows.length ? rows.map(p => `
+    <div class="project-row">
+      <button class="result-file project-use" data-pid="${Number(p.id)||0}">
+        <span><b>${esc(p.name)}</b><br><small>${esc(p.goal || p.description || 'Saved project')}</small></span>
+        <span><b>${esc(canonicalStatusLabel(p))}</b><br><small>Use as source -></small></span>
+      </button>
+      <button class="project-delete" data-delete-pid="${Number(p.id)||0}" data-delete-name="${esc(p.name)}" title="Permanently delete this project">Delete</button>
+    </div>`).join('') : '<p class="muted">No saved user projects are currently available.</p>';
   document.querySelectorAll('[data-pid]').forEach(button => button.onclick = () => {
     $('project').value = button.dataset.pid;
     setSourceMode('project');
     page('home');
     setStep(1);
     $('sourceCard').scrollIntoView({behavior:'smooth'});
+  });
+  document.querySelectorAll('[data-delete-pid]').forEach(button => button.onclick = async event => {
+    event.stopPropagation();
+    const projectId = Number(button.dataset.deletePid || 0);
+    const projectName = button.dataset.deleteName || 'this project';
+    if (!projectId || !window.confirm(`Permanently delete "${projectName}"?
+
+This removes the saved project and its Core project data. Existing generated results remain in Results & versions.`)) return;
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Deleting...';
+    try {
+      await api('/api/projects/delete', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({project_id:projectId})});
+      if (Number($('project').value || 0) === projectId) $('project').value = '0';
+      await loadProjects();
+      if ($('workspace')?.classList.contains('active')) await loadWorkspace();
+    } catch (error) {
+      button.disabled = false;
+      button.textContent = originalText;
+      window.alert('Agape could not delete this project: ' + (error?.message || error));
+    }
   });
   updateSourceStatus();
 }
@@ -395,6 +537,8 @@ async function boot() {
     QUALITY = SETUP.settings.quality || 'standard';
     applyExperienceUI();
     await loadProjects();
+    renderProjectStarters();
+    await hydrateDownloadHistory();
     if (!SETUP.settings.setup_complete) {
       SETUP = await api('/api/setup/status');
       selectedExperience = SETUP.settings.experience || 'basic';
@@ -530,6 +674,8 @@ $('analyse').onclick = async () => {
 
     INTAKE = data.intake || data;
     renderIntake(INTAKE);
+    await loadProjects();
+    if ($('workspaceTree')) await loadWorkspace();
     $('intakeCard').classList.remove('hidden');
     $('progressCard').classList.add('hidden');
     setStep(2);
@@ -553,9 +699,19 @@ function fieldValue(row) {
 function fieldLabel(key) {
   return key.replaceAll('_',' ').replace(/\b\w/g, ch => ch.toUpperCase());
 }
+function humanFieldReason(key, row, priority=false) {
+  const raw = row && typeof row === 'object' ? String(row.reason || row.status || '') : '';
+  const low = raw.toLowerCase();
+  const value = fieldValue(row).trim().toLowerCase();
+  if (value === 'none' || low.includes('no reliable or relevant value') || low.includes('could not responsibly infer')) {
+    return priority ? 'Add this if it is known and relevant. Agape will not invent it.' : 'Not established from the current source yet.';
+  }
+  return raw;
+}
 function fieldMarkup(key, row, priority=false) {
-  const reason = row && typeof row === 'object' ? (row.reason || row.status || '') : '';
-  return `<label class="${priority ? 'priority-field' : ''}"><span>${esc(fieldLabel(key))}</span><textarea data-field="${esc(key)}" rows="3" spellcheck="true" autocapitalize="sentences">${esc(fieldValue(row))}</textarea>${reason ? `<small>${esc(reason)}</small>` : ''}</label>`;
+  const reason = humanFieldReason(key,row,priority);
+  const value = fieldValue(row).trim().toLowerCase() === 'none' ? '' : fieldValue(row);
+  return `<label class="${priority ? 'priority-field' : ''}"><span>${esc(fieldLabel(key))}</span><textarea data-field="${esc(key)}" rows="3" spellcheck="true" autocapitalize="sentences" placeholder="${priority ? 'Add if known' : ''}">${esc(value)}</textarea>${reason ? `<small>${esc(reason)}</small>` : ''}</label>`;
 }
 
 function writingCheckMarkup(report) {
@@ -581,7 +737,11 @@ function renderIntake(intake) {
   const fields = intake.ai_fill?.fields || {};
   const entries = Object.entries(fields);
   const questions = intake.unresolved_questions || [];
-  const unresolved = new Set(questions.map(q => String(q.field_id || '')));
+  const opportunities = Array.isArray(intake.extra_information_opportunities) ? intake.extra_information_opportunities : [];
+  const researchable = new Set(opportunities.map(q => String(q.field_id || '')));
+  const userQuestions = questions.filter(q => !Boolean(q.researchable) && !researchable.has(String(q.field_id || '')));
+  const unresolved = new Set(userQuestions.map(q => String(q.field_id || '')));
+  const allUnresolved = new Set(questions.map(q => String(q.field_id || '')));
 
   const established = Number.isFinite(Number(intake.established_count))
     ? Number(intake.established_count)
@@ -590,8 +750,8 @@ function renderIntake(intake) {
         const status = String(row?.status || '').toLowerCase();
         return value && value.toLowerCase() !== 'none' && status !== 'unresolved';
       }).length;
-  $('intakeSummary').textContent = `${established} established · ${questions.length} need attention`;
-  $('intakeReady').textContent = questions.length ? 'Review' : 'Ready';
+  $('intakeSummary').textContent = `${established} established · ${userQuestions.length} need your input${opportunities.length ? ` · ${opportunities.length} public research opportunit${opportunities.length===1?'y':'ies'}` : ''}`;
+  $('intakeReady').textContent = userQuestions.length ? 'Review' : 'Ready';
 
   const writing = intake.upload?.writing_check || intake.writing_check || null;
   const writingHtml = writingCheckMarkup(writing);
@@ -600,24 +760,35 @@ function renderIntake(intake) {
 
   const missingDetails = $('missingDetails');
   const missingWasOpen = Boolean(missingDetails?.open);
-  missingDetails.classList.toggle('hidden', !questions.length);
-  $('missingSummary').textContent = `${questions.length} item${questions.length===1?'':'s'} need attention`;
-  $('missingActions').classList.toggle('hidden', !questions.length);
-  $('missingBox').innerHTML = questions.length
-    ? `<b>${questions.length} item${questions.length===1?'':'s'} could not be established safely.</b><br><span class="muted">Fill them below, or let Agape research public information. Private facts are never invented.</span>`
+  missingDetails.classList.toggle('hidden', !userQuestions.length);
+  $('missingSummary').textContent = `${userQuestions.length} item${userQuestions.length===1?'':'s'} need your input`;
+  $('missingBox').innerHTML = userQuestions.length
+    ? `<b>${userQuestions.length} item${userQuestions.length===1?'':'s'} need information from you.</b><br><span class="muted">These are private, user-specific or not safely discoverable from public sources. Agape will not invent them.</span>`
     : '';
-  if (!questions.length) {
-    missingDetails.open = false;
-    $('researchProgress').classList.add('hidden');
-  } else {
-    missingDetails.open = missingWasOpen;
-  }
+  if (!userQuestions.length) missingDetails.open = false; else missingDetails.open = missingWasOpen;
+
+  const extra = $('extraInfoDetails');
+  const currentExtraIntakeId = String(intake.id || '');
+  const sameExtraIntake = currentExtraIntakeId && currentExtraIntakeId === LAST_EXTRA_INTAKE_ID;
+  const extraWasOpen = sameExtraIntake && Boolean(extra?.open);
+  extra.classList.toggle('hidden', !opportunities.length);
+  $('extraInfoSummary').textContent = 'Extra information could be gathered';
+  $('extraInfoCount').textContent = String(opportunities.length);
+  $('extraInfoList').innerHTML = opportunities.map(x => {
+    const raw=String(x.reason || '');
+    const reason=(raw.toLowerCase().includes('no reliable or relevant value') || raw.toLowerCase().includes('could not responsibly infer'))
+      ? 'Agape has not confirmed this from the saved source yet. Public research may strengthen it.'
+      : (raw || x.question || 'Public research could strengthen this project.');
+    return `<div class="research-opportunity"><b>${esc(x.label || 'Public information')}</b><br><span class="muted">${esc(reason)}</span></div>`;
+  }).join('');
+  if (!opportunities.length) { extra.open=false; $('researchProgress').classList.add('hidden'); } else { extra.open=extraWasOpen; }
+  LAST_EXTRA_INTAKE_ID = currentExtraIntakeId;
 
   const priorityRows = entries.filter(([key]) => unresolved.has(String(key)));
   $('priorityFields').classList.toggle('hidden', !priorityRows.length);
   $('priorityFields').innerHTML = priorityRows.map(([key,row]) => fieldMarkup(key,row,true)).join('');
 
-  const resolvedRows = entries.filter(([key]) => !unresolved.has(String(key)));
+  const resolvedRows = entries.filter(([key]) => !allUnresolved.has(String(key)));
   $('formFields').innerHTML = resolvedRows.map(([key,row]) => fieldMarkup(key,row,false)).join('');
   $('allDetails').classList.toggle('hidden', !resolvedRows.length);
   if (selectedExperience !== 'advanced') $('allDetails').open = false;
@@ -654,13 +825,13 @@ $('findMissing').onclick = async () => {
     const data = await api(`/api/intake/${encodeURIComponent(INTAKE.id)}/improve`, {method:'POST'});
     renderIntake(data.intake || data);
     finishResearchProgress(true, 'Research complete. Safe public information has been applied to the brief.');
-    toast('Missing information checked');
+    toast('Public information gathered');
   } catch (error) {
     finishResearchProgress(false, `Research stopped: ${error.message || error}`);
     $('missingBox').innerHTML = `<b>Agape could not complete the research pass.</b><br>${esc(error.message || error)}`;
   } finally {
     $('findMissing').disabled = false;
-    $('findMissing').textContent = 'Research missing public information';
+    $('findMissing').textContent = 'Gather public information';
   }
 };
 
@@ -869,6 +1040,8 @@ function finishResult(result, jobId='') {
   if (jobId) $('reviseResult').onclick = () => reviseResult(jobId);
   if ($('technicalDetails')) $('technicalDetails').classList.toggle('hidden', selectedExperience === 'basic');
   loadRecent().catch(() => {});
+  if ($('workspaceTree')) loadWorkspace().catch(() => {});
+  loadProjects().catch(() => {});
 }
 
 async function reviseResult(jobId) {
@@ -892,6 +1065,7 @@ function showError(error) {
   $('progressText').textContent = String(error.message || error);
   $('progressBar').classList.add('failed');
   setProgress(100, 'Stopped');
+  DOWNLOAD_MANAGER.jobId = CURRENT_JOB || DOWNLOAD_MANAGER.jobId;
   DOWNLOAD_MANAGER.preparation = {...DOWNLOAD_MANAGER.preparation,status:'failed',progress:100,stage:'Stopped',eta:'',error:String(error.message || error)};
   renderDownloadManager();
   $('tech').textContent = String(error.stack || error);
@@ -918,7 +1092,7 @@ async function loadRecent() {
   const rows = data.items || [];
   $('recent').innerHTML = rows.map(item => {
     const jobId = String(item.external_job_id || '');
-    return `<div class="result-file"><span><b>${esc(item.title || item.route)}</b><br><small>${esc(item.created_at)} · ${esc(item.status)}</small></span>${jobId ? `<button data-resume-job="${esc(jobId)}">Check / resume →</button>` : `<span>${esc(item.route)}</span>`}</div>`;
+    return `<div class="result-file"><span><b>${esc(item.title || item.route)}</b><br><small>${esc(item.created_at)} · ${esc(canonicalStatusLabel(item))}</small></span>${jobId ? `<button data-resume-job="${esc(jobId)}">Check / resume →</button>` : `<span>${esc(item.route)}</span>`}</div>`;
   }).join('') || '<p class="muted">No work yet.</p>';
   document.querySelectorAll('[data-resume-job]').forEach(button => button.onclick = () => resumeRecentJob(button.dataset.resumeJob));
 }
@@ -961,13 +1135,13 @@ function workspaceOpen(kind,id) {
   if (kind === 'project') {
     const item = WORKSPACE_DATA.projects.find(x => String(x.id) === String(id)); if (!item) return;
     tab.textContent = item.name || 'Project';
-    preview.innerHTML = `<div class="workspace-preview-card"><div class="step-label">Project</div><h2>${esc(item.name || 'Untitled project')}</h2><p>${esc(item.goal || item.description || 'Saved Agape project')}</p><dl><dt>Project ID</dt><dd>${esc(item.id)}</dd><dt>Status</dt><dd>${esc(item.status || 'saved')}</dd></dl><div class="row"><button class="primary" id="workspaceUseProject">Use as source</button><button id="workspaceProjectTodo">Add to to-do</button></div></div>`;
+    preview.innerHTML = `<div class="workspace-preview-card"><div class="step-label">Project</div><h2>${esc(item.name || 'Untitled project')}</h2><p>${esc(item.goal || item.description || 'Saved Agape project')}</p><dl><dt>Project ID</dt><dd>${esc(item.id)}</dd><dt>Status</dt><dd>${esc(canonicalStatusLabel(item))}</dd></dl><div class="row"><button class="primary" id="workspaceUseProject">Use as source</button><button id="workspaceProjectTodo">Add to to-do</button></div></div>`;
     $('workspaceUseProject').onclick = () => { $('project').value = String(item.id); setSourceMode('project'); page('home'); setStep(1); };
     $('workspaceProjectTodo').onclick = () => addTodo(`Continue project: ${item.name || 'Untitled project'}`);
   } else {
     const item = WORKSPACE_DATA.jobs.find(x => String(x.external_job_id || x.id || '') === String(id)); if (!item) return;
     const title = item.title || item.route || 'Result'; tab.textContent = title;
-    preview.innerHTML = `<div class="workspace-preview-card"><div class="step-label">Result / job</div><h2>${esc(title)}</h2><dl><dt>Status</dt><dd>${esc(item.status || 'unknown')}</dd><dt>Created</dt><dd>${esc(item.created_at || '')}</dd><dt>Route</dt><dd>${esc(item.route || '')}</dd></dl>${item.external_job_id ? `<button class="primary" id="workspaceResumeJob">Check / resume job</button>`:''}</div>`;
+    preview.innerHTML = `<div class="workspace-preview-card"><div class="step-label">Result / job</div><h2>${esc(title)}</h2><dl><dt>Status</dt><dd>${esc(canonicalStatusLabel(item))}</dd><dt>Created</dt><dd>${esc(item.created_at || '')}</dd><dt>Route</dt><dd>${esc(item.route || '')}</dd></dl>${item.external_job_id ? `<button class="primary" id="workspaceResumeJob">Check / resume job</button>`:''}</div>`;
     if ($('workspaceResumeJob')) $('workspaceResumeJob').onclick = () => resumeRecentJob(item.external_job_id);
   }
   document.querySelectorAll('.tree-file').forEach(x => x.classList.toggle('active', x.dataset.kind===kind && String(x.dataset.id)===String(id)));
@@ -980,7 +1154,7 @@ function renderWorkspaceTree() {
 }
 function renderWorkspaceJobs() {
   const jobs = WORKSPACE_DATA.jobs || []; $('jobCount').textContent = String(jobs.length);
-  $('workspaceJobs').innerHTML = jobs.length ? jobs.slice(0,20).map(j => { const id=j.external_job_id||j.id||''; return `<div class="job-row" data-workspace-job="${esc(id)}"><b>${esc(j.title || j.route || 'Agape job')}</b><small>${esc(j.created_at || '')}</small><br><span class="job-status ${esc(String(j.status||'').toLowerCase())}">${esc(j.status || 'unknown')}</span></div>`; }).join('') : '<p class="muted">No recent jobs.</p>';
+  $('workspaceJobs').innerHTML = jobs.length ? jobs.slice(0,20).map(j => { const id=j.external_job_id||j.id||''; return `<div class="job-row" data-workspace-job="${esc(id)}"><b>${esc(j.title || j.route || 'Agape job')}</b><small>${esc(j.created_at || '')}</small><br><span class="job-status ${esc(String(j.status||'').toLowerCase())}">${esc(canonicalStatusLabel(j))}</span></div>`; }).join('') : '<p class="muted">No recent jobs.</p>';
   bindWorkspaceContextMenus();
 }
 async function loadWorkspace() {
@@ -1169,7 +1343,8 @@ async function codingToolAction(tool, action) {
   if (button) button.disabled = true;
   try {
     const data = await api('/api/coding/tools/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool,action})});
-    toast(data.message || 'Done');
+    if(data && data.ok===false) throw new Error(data.message || data.error || data.output || 'Coding tool action did not complete');
+    toast(data.message || (action==='install'?'Installation completed':'Done'));
     setTimeout(loadCodingTools, 1200);
   } catch (error) {
     toast(error.message || String(error));
@@ -1194,7 +1369,7 @@ async function loadCodingTools() {
     const card=(title,item,actions)=>`<div class="tool-card"><div><b>${esc(title)}</b> <span class="${item?.ready?'ok':'warn'}">${item?.ready?'Ready':item?.planned?'Planned':'Not installed'}</span><br><small>${esc(item?.summary||'')}</small>${item?.windows_note?`<br><small>${esc(item.windows_note)}</small>`:''}</div><div class="tool-actions">${actions}</div></div>`;
     box.innerHTML =
       card('Aider',agentMap.aider, agentMap.aider?.ready ? '' : '<button data-support-package="aider-chat" onclick="installCodingSupport(\'pip\',\'aider-chat\')">Install Aider</button>') +
-      card('OpenHands',agentMap.openhands, agentMap.openhands?.ready ? '' : '<button data-coding-tool="openhands" data-coding-action="help" onclick="codingToolAction(\'openhands\',\'help\')">Setup instructions</button>') +
+      card('OpenHands',agentMap.openhands, agentMap.openhands?.ready ? '<button data-coding-tool="openhands" data-coding-action="open" onclick="codingToolAction(\'openhands\',\'open\')">Open OpenHands</button>' : '<button data-coding-tool="openhands" data-coding-action="install" onclick="codingToolAction(\'openhands\',\'install\')">Install OpenHands</button><button class="secondary" data-coding-tool="openhands" data-coding-action="help" onclick="codingToolAction(\'openhands\',\'help\')">Setup instructions</button>') +
       card('Open Interpreter',agentMap['open-interpreter'], agentMap['open-interpreter']?.ready ? '' : '<button data-coding-tool="open-interpreter" data-coding-action="help" onclick="codingToolAction(\'open-interpreter\',\'help\')">Project / install info</button>') +
       card('Theia Lite',mgrMap['theia-lite'],'<span class="muted">Embedded build option; not downloaded automatically.</span>') +
       card('Theia Full',mgrMap['theia-full'], mgrMap['theia-full']?.ready ? '<button data-coding-tool="theia-full" data-coding-action="open" onclick="codingToolAction(\'theia-full\',\'open\')">Open</button>' : '<button data-coding-tool="theia-full" data-coding-action="download" onclick="codingToolAction(\'theia-full\',\'download\')">Download Theia</button>') +
@@ -1345,7 +1520,7 @@ async function loadTestingTools(){
   try{
     const data=await api('/api/testing/tools');
     const rows=data.tools||[];
-    box.innerHTML=rows.map(t=>`<div class="cap-row"><div><b>${esc(t.name)}</b> ${t.recommended?'<span class="ok">Recommended</span>':'<span class="muted">Optional</span>'}<br><small>${esc(t.why)}</small><br><small class="muted">${esc(t.cost)}</small></div><div class="cap-actions"><span class="${t.installed?'ok':'warn'}">${t.installed?'Installed':'Not installed'}</span>${t.installed?'':`<button class="secondary installTestingTool" data-tool="${esc(t.id)}">Install</button>`}</div></div>`).join('') || '<p class="muted">No testing tools reported.</p>';
+    box.innerHTML=rows.map(t=>{const tier=t.tier==='advanced'?'Full Developer/Admin':t.tier==='standard'?'Standard':'Essential';return `<div class="cap-row"><div><b>${esc(t.name)}</b> ${t.recommended?'<span class="ok">Standard</span>':`<span class="muted">${esc(tier)}</span>`}<br><small>${esc(t.why)}</small><br><small class="muted">${esc(t.cost)}</small>${t.detail?`<br><small class="muted">Status: ${esc(t.detail)}</small>`:''}</div><div class="cap-actions"><span class="${t.installed?'ok':'warn'}">${t.installed?'Installed':'Not installed'}</span>${t.installed?'':`<button class="secondary installTestingTool" data-tool="${esc(t.id)}">Install</button>`}</div></div>`}).join('') || '<p class="muted">No testing tools reported.</p>';
     document.querySelectorAll('.installTestingTool').forEach(btn=>btn.onclick=()=>installTestingTool(btn.dataset.tool));
   }catch(e){box.innerHTML=`<p class="bad">Could not check testing tools: ${esc(String(e.message||e))}</p>`;}
 }
@@ -1361,12 +1536,61 @@ async function installTestingTool(id){
 }
 if($('refreshTestingTools')) $('refreshTestingTools').onclick=loadTestingTools;
 if($('installRecommendedTesting')) $('installRecommendedTesting').onclick=async()=>{
-  if(!confirm('Install the recommended testing set?\n\nThis adds accessibility, API edge-case, security and browser quality testing. Each tool is optional and can also be installed separately.'))return;
+  if(!confirm('Install the Standard testing set?\n\nThis installs the lighter everyday developer checks: accessibility, API edge cases and Lighthouse. ZAP, load testing and Android tooling stay in Full Developer/Admin.'))return;
   const data=await api('/api/testing/tools');
   for(const id of (data.recommended_ids||[])){
     const row=(data.tools||[]).find(x=>x.id===id);
     if(row && !row.installed){await api('/api/testing/tools/install',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool:id})}).catch(()=>null);}
   }
   await loadTestingTools();
-  toast('Recommended testing tools install attempt finished');
+  toast('Standard testing tools install attempt finished');
 };
+
+// R2.4: coherent installation profiles. These preserve the existing experience
+// setting values for backwards compatibility while making downloads explicit.
+const INSTALL_PROFILE_META={
+  basic:{label:'Essential / Low use',warning:'Installs no heavy optional toolchain. Agape core, documents and research remain available.'},
+  standard:{label:'Standard / Medium use',warning:'Adds Git, VS Code, Node, Chromium QA, axe, Schemathesis and Lighthouse.'},
+  advanced:{label:'Full Developer/Admin / High use',warning:'Large install. Adds Standard tools plus Ollama/Aider support, OWASP ZAP + Java, k6, Appium Android prerequisites and OpenHands through WSL. WSL/Android setup can require a restart or device/emulator setup.'}
+};
+function profileStatus(text,cls='muted'){
+  const box=$('installProfileStatus');if(!box)return;
+  box.className='notice '+cls;box.textContent=text;
+}
+async function profileCall(label,fn,rows){
+  profileStatus('Working on: '+label+'…','warn');
+  try{const out=await fn();rows.push({label,ok:out?.ok!==false,detail:out?.message||out?.error||''});return out;}
+  catch(e){rows.push({label,ok:false,detail:String(e.message||e)});return null;}
+}
+async function installUsageProfile(exp){
+  const meta=INSTALL_PROFILE_META[exp]||INSTALL_PROFILE_META.basic;
+  if(!confirm(`Use ${meta.label}?\n\n${meta.warning}\n\nAgape will only start optional installers after this confirmation.`))return;
+  const rows=[];
+  const plan=await profileCall('saving Agape profile',()=>api(`/api/setup/plan?experience=${encodeURIComponent(exp)}`),rows);
+  if(plan?.plan){
+    const caps=(plan.plan.capabilities||[]).filter(x=>x.required||x.recommended_now).map(x=>x.id);
+    await profileCall('enabling profile capabilities',()=>api('/api/setup/apply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({experience:exp,selected_capabilities:caps})}),rows);
+  }
+  if(exp!=='basic'){
+    for(const [kind,pkg,label] of [
+      ['winget','git','Git'],['winget','vscode','VS Code'],['winget','node','Node.js LTS']
+    ]) await profileCall('install/check '+label,()=>api('/api/support/install',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,package:pkg})}),rows);
+    for(const [id,label] of [['axe','axe accessibility'],['schemathesis','Schemathesis'],['lighthouse','Lighthouse CI']])
+      await profileCall('install/check '+label,()=>api('/api/testing/tools/install',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool:id})}),rows);
+    await profileCall('install/check Chromium QA',()=>api('/api/qa/browser/install-chromium',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}),rows);
+  }
+  if(exp==='advanced'){
+    await profileCall('install/check Aider',()=>api('/api/support/install',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'pip',package:'aider-chat'})}),rows);
+    await profileCall('install/check Ollama',()=>api('/api/support/install',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'winget',package:'ollama'})}),rows);
+    for(const [id,label] of [['zap','OWASP ZAP + Java'],['k6','k6 load testing'],['appium-android','Appium Android']])
+      await profileCall('install/check '+label,()=>api('/api/testing/tools/install',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool:id})}),rows);
+    await profileCall('install/check OpenHands',()=>api('/api/coding/tools/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool:'openhands',action:'install'})}),rows);
+  }
+  const failed=rows.filter(x=>!x.ok);
+  const done=rows.filter(x=>x.ok).length;
+  profileStatus(`${meta.label}: ${done}/${rows.length} steps completed${failed.length?`. ${failed.length} need attention: `+failed.map(x=>x.label+(x.detail?' — '+x.detail:'')).join(' | '):'. Ready.'}`,failed.length?'warn':'ready');
+  await loadSettings().catch(()=>null);
+}
+if($('installProfileBasic')) $('installProfileBasic').onclick=()=>installUsageProfile('basic');
+if($('installProfileStandard')) $('installProfileStandard').onclick=()=>installUsageProfile('standard');
+if($('installProfileAdvanced')) $('installProfileAdvanced').onclick=()=>installUsageProfile('advanced');

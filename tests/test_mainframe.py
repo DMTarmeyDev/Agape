@@ -238,7 +238,8 @@ class MainframeTests(unittest.TestCase):
 
     def test_review_summary_counts_established_not_none_as_completed(self):
         js=(ROOT/'web'/'app.js').read_text(encoding='utf-8')
-        self.assertIn('established · ${questions.length} need attention',js)
+        self.assertIn('established · ${userQuestions.length} need your input',js)
+        self.assertIn('public research opportunit',js)
         self.assertNotIn('fields completed · ${questions.length} need attention',js)
 
 if __name__=='__main__':unittest.main(verbosity=2)

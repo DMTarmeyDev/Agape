@@ -1,10 +1,10 @@
 from __future__ import annotations
-import base64, json, os, re, sqlite3, subprocess, time, urllib.parse
+import base64, json, os, re, sqlite3, subprocess, threading, time, urllib.parse
 from pathlib import Path
 from typing import Any
 from .project_recovery import find_live_core_db
 from .http_client import request_json
-from .state import record_event, remember_work, sync_external_work_status
+from .state import record_event, remember_work, recent_work, sync_external_work_status
 from .service_runtime import (
     runtime_log_dir,
     service_command,
@@ -19,7 +19,102 @@ DOC="http://127.0.0.1:8851"
 R24_BUNDLED=service_source_path("workflow-bridge")
 DOC_BUNDLED=service_source_path("document-studio")
 EXPECTED_DOC_VERSION="R31.16"
+EXPECTED_DOC_BUILD="R31.16-document-path-reliability-r2.2"
 EXPECTED_R24_BUILD="AGAPE-UNIFIED-R4.7-TARGETED-VALIDATION-REPAIR"
+
+
+_STATUS_SYNC_LOCK = threading.Lock()
+_STATUS_SYNC_LAST = 0.0
+_STATUS_SYNC_TTL = 2.0
+_TERMINAL_WORK = {"PASS","FAIL","BLOCKED","FAILED","COMPLETE","COMPLETED","SUCCESS","DONE","ERROR","ACTION_REQUIRED"}
+
+def _display_work_status(value: Any) -> str:
+    raw=str(value or "").strip().upper().replace("-","_").replace(" ","_")
+    if raw in {"PASS","COMPLETE","COMPLETED","SUCCESS","DONE"}: return "Complete"
+    if raw in {"BLOCKED","ACTION_REQUIRED","NEEDS_ATTENTION"}: return "Needs attention"
+    if raw in {"FAIL","FAILED","ERROR"}: return "Failed"
+    if raw in {"QUEUED","PENDING"}: return "Queued"
+    if raw in {"RUNNING","WORKING","IN_PROGRESS","START","STARTED","UNKNOWN"}: return "Working"
+    return str(value or "Saved").strip() or "Saved"
+
+def _result_project_id(item: dict[str,Any]) -> int:
+    root=item.get("result") if isinstance(item.get("result"),dict) else {}
+    candidates=[root,root.get("job") if isinstance(root.get("job"),dict) else {},root.get("result") if isinstance(root.get("result"),dict) else {}]
+    if isinstance(root.get("job"),dict) and isinstance(root["job"].get("result"),dict): candidates.append(root["job"]["result"])
+    for value in candidates:
+        if not isinstance(value,dict): continue
+        try:
+            pid=int(value.get("project_id") or value.get("source_project_id") or 0)
+            if pid>0:return pid
+        except Exception: pass
+    return 0
+
+def recent_work_with_live_status(limit: int = 50) -> list[dict[str,Any]]:
+    """Return Mainframe history after refreshing unfinished bridge jobs.
+
+    This is the canonical status feed for every UI page/device.  Refreshing here
+    prevents Results, Projects and Workspace from disagreeing simply because one
+    browser happened to poll the job more recently than another.
+    """
+    global _STATUS_SYNC_LAST
+    rows=recent_work(limit)
+    now=time.monotonic()
+    should_refresh=(now-_STATUS_SYNC_LAST)>=_STATUS_SYNC_TTL
+    if should_refresh and _STATUS_SYNC_LOCK.acquire(blocking=False):
+        try:
+            _STATUS_SYNC_LAST=now
+            active=[x for x in rows if x.get("external_job_id") and str(x.get("status") or "").upper() not in _TERMINAL_WORK][:20]
+            if active:
+                # Do not start the bridge just to paint a status badge. If it is
+                # already running, local status checks are fast and authoritative.
+                if r24_ready():
+                    for item in active:
+                        jid=str(item.get("external_job_id") or "")
+                        if not jid: continue
+                        status,payload=request_json("GET",R24+"/api/jobs/"+urllib.parse.quote(jid),timeout=3)
+                        if status==200 and isinstance(payload,dict):
+                            try: sync_external_work_status(jid,payload)
+                            except Exception: pass
+                rows=recent_work(limit)
+        finally:
+            _STATUS_SYNC_LOCK.release()
+    for item in rows:
+        item["status_label"]=_display_work_status(item.get("status"))
+        item["terminal"]=str(item.get("status") or "").upper() in _TERMINAL_WORK
+        pid=_result_project_id(item)
+        if pid:item["project_id"]=pid
+    return rows
+
+def projects_with_live_status() -> list[dict[str,Any]]:
+    """Return projects decorated with the latest canonical work status."""
+    rows=projects()
+    history=recent_work_with_live_status(100)
+    by_project: dict[int,dict[str,Any]]={}
+    by_name: dict[str,dict[str,Any]]={}
+    for work in history:
+        pid=int(work.get("project_id") or 0)
+        if pid>0 and pid not in by_project: by_project[pid]=work
+        title=str(work.get("title") or "").strip().casefold()
+        if title and title not in by_name: by_name[title]=work
+    out=[]
+    for project in rows:
+        row=dict(project)
+        try: pid=int(row.get("id") or 0)
+        except Exception: pid=0
+        work=by_project.get(pid)
+        if not work:
+            work=by_name.get(str(row.get("name") or "").strip().casefold())
+        if work:
+            raw=str(work.get("status") or "")
+            row["saved_status"]=row.get("status")
+            row["status"]=raw
+            row["status_label"]=_display_work_status(raw)
+            row["latest_job_id"]=str(work.get("external_job_id") or "")
+            row["latest_work_at"]=str(work.get("created_at") or "")
+        else:
+            row["status_label"]=_display_work_status(row.get("status") or "Saved")
+        out.append(row)
+    return out
 
 
 
@@ -70,7 +165,7 @@ def ensure_existing_services(plan: dict[str,Any], project_id: int=0) -> dict[str
             _launch_ps1(root/"START-DMT-SECOND-BRAIN.ps1");result["core"]=_wait(CORE+"/api/version",35)
     if need_docs:
         s,p=request_json("GET",DOC+"/api/health",timeout=2)
-        result["documents"]=bool(s==200 and isinstance(p,dict) and str(p.get("version") or "")==EXPECTED_DOC_VERSION)
+        result["documents"]=bool(s==200 and isinstance(p,dict) and str(p.get("version") or "")==EXPECTED_DOC_VERSION and str(p.get("build_id") or "")==EXPECTED_DOC_BUILD)
         # V3.4 uses a private Document Studio port so an older installed R31.10
         # process on the legacy 8800 port can never be adopted accidentally.
         if not result["documents"] and DOC_BUNDLED.exists():
@@ -78,11 +173,11 @@ def ensure_existing_services(plan: dict[str,Any], project_id: int=0) -> dict[str
             end=time.time()+45
             while time.time()<end:
                 ds,dp=request_json("GET",DOC+"/api/health",timeout=2)
-                if ds==200 and isinstance(dp,dict) and str(dp.get("version") or "")==EXPECTED_DOC_VERSION:
+                if ds==200 and isinstance(dp,dict) and str(dp.get("version") or "")==EXPECTED_DOC_VERSION and str(dp.get("build_id") or "")==EXPECTED_DOC_BUILD:
                     result["documents"]=True;break
                 time.sleep(.5)
         if not result["documents"]:
-            raise RuntimeError("DOCUMENT_STUDIO_INCOMPATIBLE_OR_NOT_READY: V4.7 requires bundled "+EXPECTED_DOC_VERSION+" on private port 8851.")
+            raise RuntimeError("DOCUMENT_STUDIO_INCOMPATIBLE_OR_NOT_READY: requires bundled "+EXPECTED_DOC_VERSION+" build "+EXPECTED_DOC_BUILD+" on private port 8851. Restart Agape after an update so stale child services are replaced.")
     if need_work:
         s,p=request_json("GET","http://127.0.0.1:8820/api/health",timeout=2);result["work"]=s==200 and isinstance(p,dict) and p.get("ok",True) is not False
         if not result["work"] and root:
@@ -225,6 +320,63 @@ def projects() -> list[dict[str, Any]]:
     return []
 
 
+def delete_project(project_id: int) -> dict[str, Any]:
+    """Permanently delete one saved user project from the local Core database.
+
+    The Mainframe Projects page exposes user projects only, so the destructive
+    operation is equally narrow: system/template/test/autodev projects cannot be
+    deleted through this endpoint. SQLite foreign keys are enabled so Core-owned
+    dependent rows follow their existing CASCADE/SET NULL rules. Mainframe result
+    history is intentionally retained.
+    """
+    pid=int(project_id or 0)
+    if pid <= 0:
+        raise ValueError("PROJECT_ID_REQUIRED")
+
+    direct_error=""
+    db_path=_find_core_db()
+    if db_path:
+        con=sqlite3.connect(str(db_path),timeout=30)
+        con.row_factory=sqlite3.Row
+        try:
+            con.execute("PRAGMA foreign_keys=ON")
+            con.execute("PRAGMA busy_timeout=30000")
+            row=con.execute(
+                "SELECT id,name,COALESCE(kind,'user') AS kind FROM projects WHERE id=?",
+                (pid,),
+            ).fetchone()
+            if row is None:
+                raise ValueError("PROJECT_NOT_FOUND")
+            if str(row["kind"] or "user").strip().lower() != "user":
+                raise ValueError("PROJECT_DELETE_FORBIDDEN")
+            cur=con.execute("DELETE FROM projects WHERE id=?",(pid,))
+            if cur.rowcount != 1:
+                raise ValueError("PROJECT_NOT_FOUND")
+            con.commit()
+            return {
+                "ok":True,
+                "project_id":pid,
+                "name":str(row["name"] or ""),
+                "deleted":True,
+                "source_database":str(db_path),
+            }
+        except ValueError:
+            con.rollback()
+            raise
+        except sqlite3.Error as exc:
+            con.rollback()
+            direct_error=str(exc)
+        finally:
+            con.close()
+
+    # Compatibility fallback: the recovered Core already has this route.
+    status,payload=request_json("POST",CORE+"/api/projects/delete",{"project_id":pid},timeout=8)
+    if status==200 and isinstance(payload,dict) and payload.get("ok",True):
+        return {"ok":True,"project_id":pid,"deleted":True,"via":"core-api"}
+    detail=json.dumps(payload,ensure_ascii=False)[:900] if isinstance(payload,(dict,list)) else str(payload or "")
+    raise RuntimeError("PROJECT_DELETE_FAILED: "+(direct_error or detail or f"Core HTTP {status}"))
+
+
 def _saved_project_bundle(project_id: int) -> dict[str, Any]:
     if project_id <= 0:
         raise RuntimeError("PROJECT_SOURCE_LOAD_FAILED: invalid project id")
@@ -329,15 +481,107 @@ def _saved_project_source(project_id: int, payload: dict[str, Any] | None = None
     rows += ["", "Source note: storage metadata, raw JSON and generic assistant boilerplate were excluded from this writing source."]
     return "\n".join(rows)[:120000]
 
+
+
+def _ensure_project_database() -> Path:
+    """Return a writable Core-compatible project DB, creating a minimal one if needed."""
+    existing=_find_core_db()
+    if existing:
+        return existing
+    local=Path(os.environ.get("LOCALAPPDATA",str(Path.home()/"AppData"/"Local")))
+    path=local/"DMT-Core-V3.1"/"second-brain-data"/"dmt_core.sqlite3"
+    path.parent.mkdir(parents=True,exist_ok=True)
+    con=sqlite3.connect(str(path),timeout=20)
+    try:
+        con.executescript("""
+        PRAGMA journal_mode=WAL;
+        PRAGMA foreign_keys=ON;
+        CREATE TABLE IF NOT EXISTS projects(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL UNIQUE,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          kind TEXT NOT NULL DEFAULT 'user',
+          archived INTEGER NOT NULL DEFAULT 0,
+          hidden_reason TEXT NOT NULL DEFAULT ''
+        );
+        CREATE TABLE IF NOT EXISTS messages(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+          role TEXT NOT NULL,
+          provider TEXT NOT NULL DEFAULT '',
+          model TEXT NOT NULL DEFAULT '',
+          content TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE TABLE IF NOT EXISTS project_loop_settings(
+          project_id INTEGER PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+          workspace TEXT NOT NULL DEFAULT '', goal TEXT NOT NULL DEFAULT '',
+          test_command TEXT NOT NULL DEFAULT '', max_steps INTEGER NOT NULL DEFAULT 4,
+          auto_model INTEGER NOT NULL DEFAULT 1, model TEXT NOT NULL DEFAULT '',
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        """)
+        con.commit()
+    finally:
+        con.close()
+    return path
+
+
+def _project_name_from_intake(intake: dict[str,Any], body: dict[str,Any], file_name: str) -> str:
+    ai=intake.get("ai_fill") if isinstance(intake.get("ai_fill"),dict) else {}
+    candidates=[ai.get("project_name"),ai.get("title"),intake.get("project_name"),body.get("title"),body.get("instruction")]
+    if file_name and file_name not in {"pasted-source.txt","prepared-intake.txt"}:
+        candidates.append(Path(file_name).stem)
+    for value in candidates:
+        name=re.sub(r"\\s+"," ",str(value or "")).strip(" .-_")
+        if len(name)>=3:
+            return name[:110]
+    return "Agape Project "+time.strftime("%Y-%m-%d %H%M")
+
+
+def _save_new_source_as_project(intake: dict[str,Any], body: dict[str,Any], source_text: str, file_name: str) -> dict[str,Any]:
+    """Create a user project for new pasted/uploaded work and attach source context."""
+    db_path=_ensure_project_database()
+    name=_project_name_from_intake(intake,body,file_name)
+    con=sqlite3.connect(str(db_path),timeout=30)
+    con.row_factory=sqlite3.Row
+    try:
+        con.execute("PRAGMA busy_timeout=30000")
+        base=name
+        suffix=1
+        while con.execute("SELECT 1 FROM projects WHERE name=?",(name,)).fetchone():
+            suffix+=1
+            name=(base[:96]+f" ({suffix})")[:120]
+        cur=con.execute("INSERT INTO projects(name,kind,archived,hidden_reason) VALUES(?,?,0,'')",(name,"user"))
+        pid=int(cur.lastrowid)
+        instruction=str(body.get("instruction") or "").strip()
+        upload=intake.get("upload") if isinstance(intake.get("upload"),dict) else {}
+        extracted=str(upload.get("text") or upload.get("preview") or "").strip()
+        source=(source_text or extracted).strip()
+        note_parts=["Agape automatically saved this new work as a reusable project."]
+        if instruction: note_parts += ["", "Requested result:", instruction]
+        if source: note_parts += ["", "Source information:", source[:80000]]
+        con.execute("INSERT INTO messages(project_id,role,provider,model,content) VALUES(?,?,?,?,?)",(pid,"user","","","\\n".join(note_parts)))
+        con.commit()
+        return {"id":pid,"name":name,"kind":"user","archived":0,"source_database":str(db_path)}
+    finally:
+        con.close()
+
 def run_work(body: dict[str, Any], plan: dict[str, Any]) -> dict[str, Any]:
     task=str(body.get("task") or "").strip(); project_id=int(body.get("project_id") or 0); quality=str(body.get("quality") or "gold").lower()
-    adopted=ensure_existing_services(plan,project_id)
+    intake_id=str(body.get("intake_id") or "").strip()
+    # A prepared document intake is a complete source snapshot. The Projects
+    # database id is useful provenance, but it must never be a hard runtime
+    # dependency for document/research creation. This also protects jobs when
+    # the live Core service is using a different/recovered project database.
+    execution_project_id=0 if intake_id and str(plan.get("route") or "") in {"document","research"} else project_id
+    adopted=ensure_existing_services(plan,execution_project_id)
     if quality not in {"standard","gold"}:quality="gold"
     reviewer_count=max(2,min(10,int(body.get("reviewer_count") or 10)))
     file_name=str(body.get("file_name") or "").strip(); file_b64=str(body.get("file_data_base64") or "").strip()
     run_id="MAIN-"+time.strftime("%Y%m%d-%H%M%S")
     record_event(run_id,"mainframe","plan","PASS",plan.get("title") or "Work planned")
-    intake_id=str(body.get("intake_id") or "").strip()
     if not intake_id and file_name and file_b64:
         bridge=ensure_r24()
         if not bridge.get("ok"):
@@ -352,7 +596,7 @@ def run_work(body: dict[str, Any], plan: dict[str, Any]) -> dict[str, Any]:
         intake_id=str(p["intake"].get("id") or "")
         record_event(run_id,"documents","intake","PASS","Source prepared")
     job_body={
-        "project_id":project_id,"intake_id":intake_id,"instruction":task,"quality_mode":quality,
+        "project_id":execution_project_id,"intake_id":intake_id,"instruction":task,"quality_mode":quality,
         "reviewer_count":reviewer_count,"router":str(body.get("router") or "agape"),
         "format":str(body.get("format") or "docx"),"also_pdf":bool(body.get("also_pdf",True)),
     }
@@ -376,7 +620,9 @@ def run_work(body: dict[str, Any], plan: dict[str, Any]) -> dict[str, Any]:
     if s not in {200,201,202} or not isinstance(p,dict) or not p.get("job_id"):
         raise RuntimeError("WORK_SUBMIT_FAILED: "+json.dumps(p,ensure_ascii=False)[:1200])
     jid=str(p["job_id"])
-    remember_work(str(body.get("title") or plan.get("title")),task,str(plan.get("route")),jid,"QUEUED",{"run_id":run_id})
+    remember_work(str(body.get("title") or plan.get("title")),task,str(plan.get("route")),jid,"QUEUED",{
+        "run_id":run_id,"project_id":execution_project_id,"source_project_id":project_id,"intake_id":intake_id
+    })
     return {"ok":True,"mode":"delegated","job_id":jid,"run_id":run_id,"status_url":"/api/work/"+urllib.parse.quote(jid)}
 
 
@@ -463,6 +709,16 @@ def prepare_intake(body: dict[str, Any], progress=None) -> dict[str, Any]:
     row=p.get("intake") if isinstance(p.get("intake"),dict) else p
     if isinstance(row,dict):
         row["source_mode"]=source_mode
+        if source_mode in {"paste","upload"} and int(row.get("project_id") or 0)<=0:
+            saved=_save_new_source_as_project(row,body,source_text,file_name)
+            row["project_id"]=int(saved["id"])
+            row["project_name"]=str(saved["name"])
+            row["auto_saved_project"]=saved
+            intake_id=str(row.get("id") or "")
+            if intake_id:
+                request_json("POST",R24+"/api/intakes/"+urllib.parse.quote(intake_id)+"/project",{
+                    "project_id":int(saved["id"]),"project_name":str(saved["name"])
+                },timeout=30)
         if "intake" in p and isinstance(p.get("intake"),dict):
             p["intake"]=row
     return p

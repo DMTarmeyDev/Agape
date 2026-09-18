@@ -738,6 +738,71 @@ def intake_field_stats(ai_fill: dict[str, Any]) -> tuple[int, int]:
     return nonempty, none_count
 
 
+PUBLIC_RESEARCHABLE_FIELDS = {
+    "organisation","industry","geography","product_service","problem_need","target_audience",
+    "value_proposition","budget_pricing","success_metrics","competitors_alternatives","constraints","research_focus",
+}
+
+
+def _researchable_field(field_id: str) -> bool:
+    return str(field_id or "") in PUBLIC_RESEARCHABLE_FIELDS
+
+
+def public_research_opportunities(intake: dict[str,Any], ai_fill: dict[str,Any] | None = None, include_plan: bool = True) -> list[dict[str,Any]]:
+    ai_fill=ai_fill if isinstance(ai_fill,dict) else (intake.get("ai_fill") if isinstance(intake.get("ai_fill"),dict) else {})
+    out=[]; seen=set()
+    for q in unresolved_questions(ai_fill):
+        fid=str(q.get("field_id") or "")
+        if not _researchable_field(fid):
+            continue
+        label=str(q.get("label") or fid.replace("_"," ").title())
+        question=(f"Find current reliable public information for {label.lower()} relevant to "
+                  f"{str(intake.get('project_name') or ai_fill.get('project_name') or ai_fill.get('title') or 'this project')}. "
+                  "Prefer official, primary and current sources; include URLs and do not infer private facts.")
+        key=(fid,question.casefold())
+        if key not in seen:
+            seen.add(key); out.append({"field_id":fid,"label":label,"question":question,"reason":str(q.get("reason") or "Public evidence may improve this field."),"researchable":True})
+    if include_plan and not intake.get("public_research"):
+        context=" ".join([
+            str(intake.get("project_info") or ""), str(intake.get("instruction") or ""),
+            str(ai_fill.get("research_focus") or ""),
+        ]).casefold()
+        research_words=(
+            "research","public information","public evidence","market","competitor","regulation","grant",
+            "funding","tender","procurement","statistics","evidence","industry trend","feasibility",
+        )
+        if any(word in context for word in research_words):
+            plan=intake.get("research_plan") if isinstance(intake.get("research_plan"),dict) else {}
+            subject=(plan.get("subject") or {}).get("primary") if isinstance(plan.get("subject"),dict) else ""
+            subject=str(subject or "business").replace("_"," ")
+            question=(f"Find current authoritative public evidence that could materially improve this {subject} project, "
+                      "including relevant market, competitor, regulatory, funding, procurement, pricing or trend evidence where applicable. "
+                      "Prefer official and primary sources, retain URLs, and do not infer private facts.")
+            key=("research_focus",question.casefold())
+            if key not in seen:
+                seen.add(key); out.append({"field_id":"research_focus","label":"Additional useful public information","question":question,
+                                           "reason":"The project asks for evidence or research that can be strengthened with current public sources.","researchable":True})
+    return out[:8]
+
+
+def set_intake_project(intake_id: str, project_id: int, project_name: str) -> dict[str,Any]:
+    intake=get_intake(intake_id)
+    if not intake: raise ValueError("INTAKE_NOT_FOUND")
+    updated=dict(intake); updated["project_id"]=int(project_id or 0); updated["project_name"]=str(project_name or intake.get("project_name") or "").strip()
+    save_intake(updated); return updated
+
+
+def _public_research_evidence_text(package: dict[str,Any], max_chars: int = 48000) -> str:
+    rows=[]; used=0
+    for src in package.get("sources") or []:
+        if not isinstance(src,dict): continue
+        piece=(f"SOURCE: {src.get('title') or 'Public source'}\\nURL: {src.get('url') or ''}\\n"
+               f"PROVIDER: {src.get('search_provider') or src.get('source_kind') or ''}\\n"
+               f"EVIDENCE: {str(src.get('text') or src.get('snippet') or '')[:4500]}\\n")
+        if used+len(piece)>max_chars: break
+        rows.append(piece); used+=len(piece)
+    return "\\n".join(rows)
+
 def unresolved_questions(ai_fill: dict[str, Any]) -> list[dict[str, str]]:
     out: list[dict[str, str]] = []
     fields = ai_fill.get("fields") if isinstance(ai_fill, dict) else {}
@@ -754,6 +819,7 @@ def unresolved_questions(ai_fill: dict[str, Any]) -> list[dict[str, str]]:
             "label": label,
             "question": f"Please provide {label.lower()} if it is known and relevant.",
             "reason": reason,
+            "researchable": _researchable_field(str(field_id)),
         })
     return out
 
@@ -773,71 +839,67 @@ def improve_intake_with_ai(intake_id: str) -> dict[str, Any]:
         raise ValueError("INTAKE_NOT_FOUND")
     current = intake.get("ai_fill") if isinstance(intake.get("ai_fill"), dict) else {}
     before_questions = unresolved_questions(current)
-    if not before_questions:
+    opportunities = public_research_opportunities(intake,current,include_plan=True)
+    if not opportunities:
         updated = dict(intake)
-        updated["unresolved_questions"] = []
-        updated["last_gap_fill"] = {"at": now_iso(), "status": "NO_GAPS", "before": 0, "after": 0}
+        updated["extra_information_opportunities"] = []
+        updated["last_gap_fill"] = {"at": now_iso(), "status": "NO_PUBLIC_GAPS", "before": len(before_questions), "after": len(before_questions)}
         save_intake(updated)
         return updated
 
     design = current.get("design") if isinstance(current.get("design"), dict) else {}
     route_choice = router_decision("planning")
-    research_plan = intake.get("research_plan") if isinstance(intake.get("research_plan"), dict) else {}
-    missing_labels = ", ".join(x["label"] for x in before_questions)
+    subject_text = research_subject_text(str(intake.get("project_name") or ""), str(intake.get("project_info") or ""), str(intake.get("instruction") or ""), current, intake.get("upload") if isinstance(intake.get("upload"),dict) else {})
+    research_body={
+        "title":str(intake.get("project_name") or current.get("project_name") or current.get("title") or "Agape project"),
+        "context":subject_text[:50000],
+        "questions":[{"question":x["question"],"preferred_sources":["official","primary","current"]} for x in opportunities[:6]],
+        "research_depth":"balanced",
+    }
+    rstatus, package=doc_post("/api/public-research",research_body,timeout=720)
+    if rstatus!=200 or not isinstance(package,dict) or package.get("ok") is False:
+        raise RuntimeError("PUBLIC_RESEARCH_FAILED: "+json.dumps(package,ensure_ascii=False)[:1800])
+    evidence=_public_research_evidence_text(package)
+    missing_labels = ", ".join(x["label"] for x in opportunities if x.get("label"))
     research_instruction = "\n\n".join(x for x in [
         str(intake.get("project_info") or "").strip(),
         str(intake.get("instruction") or "").strip(),
-        research_plan_instruction(research_plan),
         (
-            "AGAPE MISSING-INFORMATION RECOVERY PASS. Re-examine the uploaded source and use current public research where appropriate to resolve the remaining fields: "
-            + missing_labels
-            + ". Preserve all already-supplied fields exactly. Prefer primary/official evidence. Do not invent private facts, customers, contracts, revenue, approvals, credentials or prices. "
-              "If a field still cannot be responsibly established, leave it as None so Agape can ask the user only that question. Return the complete form."
+            "AGAPE PUBLIC-INFORMATION PASS. Use the supplied PUBLIC RESEARCH EVIDENCE to improve only facts that can be supported by those sources. "
+            "Fields/topics being researched: "+missing_labels+". Preserve all user-supplied fields exactly. Prefer official/primary evidence. "
+            "Never invent private facts, customers, contracts, internal revenue, approvals, credentials or unpublished prices. If evidence is insufficient, leave that field as None."
         ),
     ] if x)
     body = {
         "title": str(current.get("title") or current.get("project_name") or intake.get("project_name") or "Agape Document"),
         "instructions": research_instruction[:160000],
-        "app": str(design.get("app") or "writer"),
-        "doc_type": str(design.get("doc_type") or "Business Proposal"),
-        "theme": str(design.get("theme") or "Executive Navy"),
-        "template_id": str(design.get("template_id") or ""),
-        "format": str(design.get("format") or "docx"),
-        "also_pdf": True,
-        "auto_template": True,
-        "ai_model": str(route_choice.get("model") or "auto"),
-        "ai_provider": str(route_choice.get("provider") or "auto"),
-        "research_enabled": True,
-        "research_depth": "deep",
-        "ingestion_engine": "direct",
-        "rag_enabled": True,
-        "rag_top_k": 12,
-        "instruction_upload_ids": [str(intake.get("upload_id") or "")],
-        "structured_form": _intake_structured_preserve(current),
-        "force_fill_missing": True,
+        "app": str(design.get("app") or "writer"), "doc_type": str(design.get("doc_type") or "Business Proposal"),
+        "theme": str(design.get("theme") or "Executive Navy"), "template_id": str(design.get("template_id") or ""),
+        "format": str(design.get("format") or "docx"), "also_pdf": True, "auto_template": True,
+        "ai_model": str(route_choice.get("model") or "auto"), "ai_provider": str(route_choice.get("provider") or "auto"),
+        "research_enabled": True, "research_depth": "balanced", "ingestion_engine": "direct", "rag_enabled": True,
+        "rag_top_k": 12, "instruction_upload_ids": [str(intake.get("upload_id") or "")],
+        "structured_form": _intake_structured_preserve(current), "force_fill_missing": False,
+        "research_evidence": package,
     }
     status, improved = doc_post("/api/ai-fill-form", body, timeout=720)
     if status != 200 or not isinstance(improved, dict) or improved.get("ok") is False:
         raise RuntimeError("MISSING_INFORMATION_AI_FILL_FAILED: " + json.dumps(improved, ensure_ascii=False)[:1800])
     field_count, none_count = intake_field_stats(improved)
     questions = unresolved_questions(improved)
-    subject_text = research_subject_text(str(intake.get("project_name") or ""), str(intake.get("project_info") or ""), str(intake.get("instruction") or ""), improved, intake.get("upload") if isinstance(intake.get("upload"), dict) else {})
     updated = dict(intake)
     updated.update({
-        "ai_fill": improved,
-        "field_count": field_count,
-        "none_count": none_count,
+        "ai_fill": improved, "field_count": field_count, "none_count": none_count,
         "design": improved.get("design") if isinstance(improved.get("design"), dict) else design,
         "best_model": improved.get("best_model_selection") if isinstance(improved.get("best_model_selection"), dict) else improved.get("provider") or {},
-        "router": str(route_choice.get("router") or intake.get("router") or "agape"),
-        "router_decision": route_choice,
-        "research_plan": research_router.recommend_sources(subject_text, 10),
-        "unresolved_questions": questions,
-        "last_gap_fill": {
-            "at": now_iso(), "status": "PASS", "before": len(before_questions), "after": len(questions),
-            "resolved": max(0, len(before_questions) - len(questions)), "router": route_choice,
-        },
+        "router": str(route_choice.get("router") or intake.get("router") or "agape"), "router_decision": route_choice,
+        "research_plan": research_router.recommend_sources(subject_text, 10), "unresolved_questions": questions,
+        "public_research": package,
+        "extra_information_opportunities": [],
+        "last_gap_fill": {"at": now_iso(), "status": "PASS", "before": len(before_questions), "after": len(questions),
+                          "resolved": max(0, len(before_questions)-len(questions)), "sources_checked":len(package.get("sources") or []), "router": route_choice},
     })
+    updated["extra_information_opportunities"]=public_research_opportunities(updated,improved,include_plan=False)
     save_intake(updated)
     return updated
 
@@ -869,6 +931,7 @@ def apply_intake_answers(intake_id: str, answers: dict[str, Any]) -> dict[str, A
         "unresolved_questions": unresolved_questions(ai_fill),
         "last_user_answers": {"at": now_iso(), "fields": changed},
     })
+    updated["extra_information_opportunities"]=public_research_opportunities(updated,ai_fill,include_plan=True)
     save_intake(updated)
     return updated
 
@@ -925,6 +988,7 @@ def revise_intake_with_ai(intake_id: str, instruction: str) -> dict[str, Any]:
         "form_revisions": revisions[-20:],
         "last_form_revision": {"at": now_iso(), "instruction": instruction, "router": route_choice},
     })
+    updated["extra_information_opportunities"]=public_research_opportunities(updated,revised,include_plan=True)
     save_intake(updated)
     return updated
 
@@ -1189,6 +1253,7 @@ def _create_document_intake_once(body: dict[str, Any]) -> dict[str, Any]:
         'router_decision': route_choice, 'research_plan': research_plan,
         'unresolved_questions': unresolved_questions(ai_fill),
     }
+    row['extra_information_opportunities']=public_research_opportunities(row,ai_fill,include_plan=True)
     save_intake(row)
     return row
 
@@ -1266,7 +1331,9 @@ def _validation_failure_details(payload: Any) -> dict[str, list[str]] | None:
         return None
     missing = [str(x).strip() for x in (obj.get("missing") or []) if str(x).strip()]
     short = [str(x).strip() for x in (obj.get("short") or []) if str(x).strip()]
-    return {"missing": missing, "short": short}
+    duplicates = [str(x).strip() for x in (obj.get("duplicates") or []) if str(x).strip()]
+    artifacts = [str(x).strip() for x in (obj.get("artifacts") or []) if str(x).strip()]
+    return {"missing": missing, "short": short, "duplicates": duplicates, "artifacts": artifacts}
 
 
 def _business_quality_contract(doc_type: str) -> str:
@@ -1278,13 +1345,17 @@ def _business_quality_contract(doc_type: str) -> str:
         "Before finalising, ensure the document contains substantive, decision-ready sections for "
         "TAM / SAM / SOM, Customer Personas, Recommendation / Next Step, and Sources / Evidence when relevant to the supplied project. "
         "Do not leave these as headings only. Use supplied or researched evidence where available, label assumptions clearly, "
-        "and never invent private customers, revenue, contracts, approvals or unsupported market figures."
+        "and never invent private customers, revenue, contracts, approvals or unsupported market figures. "
+        "There must be one authoritative version of each section: do not duplicate Executive Summary, market, financial, risk or recommendation sections. "
+        "Before finalising, reconcile repeated figures, dates and assumptions so the document does not present competing financial forecasts or valuations."
     )
 
 
 def _validation_repair_instruction(details: dict[str, list[str]], attempt: int) -> str:
     missing = details.get("missing") or []
     short = details.get("short") or []
+    duplicates = details.get("duplicates") or []
+    artifacts = details.get("artifacts") or []
     lines = [
         "AGAPE TARGETED VALIDATION REPAIR PASS " + str(attempt) + ".",
         "Regenerate the complete document, preserving all supplied facts and already-strong sections.",
@@ -1293,6 +1364,10 @@ def _validation_repair_instruction(details: dict[str, list[str]], attempt: int) 
         lines.append("The validator says these required sections are MISSING and must be added with substantive content: " + "; ".join(missing) + ".")
     if short:
         lines.append("The validator says these sections are TOO SHORT and must be expanded with useful analysis, evidence, assumptions, implications and concrete detail: " + "; ".join(short) + ".")
+    if duplicates:
+        lines.append("The validator found DUPLICATE versions of these sections. Return exactly one reconciled authoritative section for each: " + "; ".join(duplicates) + ".")
+    if artifacts:
+        lines.append("Remove internal/formatting artefacts from the client document: " + "; ".join(artifacts) + ".")
     lines.extend([
         "For Sources / Evidence, include a clear evidence/source section rather than merely saying research is required.",
         "For Recommendation / Next Step, state a concrete recommendation and specific next actions.",
@@ -1733,9 +1808,21 @@ def new_job(body: dict[str, Any]) -> dict[str, Any]:
     intake = get_intake(intake_id) if intake_id else None
     if project_id <= 0 and not intake:
         raise ValueError('PROJECT_OR_SOURCE_DOCUMENT_REQUIRED')
-    project = project_by_id(project_id) if project_id > 0 else None
+    project = None
+    if project_id > 0:
+        try:
+            project = project_by_id(project_id)
+        except Exception:
+            # Prepared document intakes are self-contained snapshots. If Core
+            # is unavailable or points at a different recovered database, the
+            # intake must still be able to create its result.
+            if not intake:
+                raise
     if project_id > 0 and not project:
-        raise ValueError('PROJECT_NOT_FOUND')
+        if intake:
+            project_id = 0
+        else:
+            raise ValueError('PROJECT_NOT_FOUND')
     if intake_id and not intake:
         raise ValueError('INTAKE_NOT_FOUND')
     if intake and project_id <= 0:
@@ -1952,6 +2039,11 @@ class Handler(BaseHTTPRequestHandler):
                 return send_json(self, 200, research_router.connector_test(str(body.get("source_id") or "")))
             if u.path == "/api/document/intake":
                 row = create_document_intake(read_body(self))
+                return send_json(self, 200, {"ok": True, "intake": row})
+            if u.path.startswith("/api/intakes/") and u.path.endswith("/project"):
+                intake_id = u.path.strip("/").split("/")[2]
+                payload = read_body(self)
+                row = set_intake_project(intake_id, int(payload.get("project_id") or 0), str(payload.get("project_name") or ""))
                 return send_json(self, 200, {"ok": True, "intake": row})
             if u.path.startswith("/api/intakes/") and u.path.endswith("/improve"):
                 intake_id = u.path.strip("/").split("/")[2]

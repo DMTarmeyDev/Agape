@@ -318,10 +318,14 @@ User-provided project notes:
             row=app.improve_intake_with_ai('AGI-GAP')
         self.assertEqual(row['none_count'],0)
         self.assertEqual(row['last_gap_fill']['resolved'],1)
-        self.assertTrue(calls[0][1]['research_enabled'])
-        self.assertEqual(calls[0][1]['research_depth'],'deep')
-        self.assertEqual(calls[0][1]['instruction_upload_ids'],['UP-GAP'])
-        self.assertNotIn('competitors_alternatives',calls[0][1]['structured_form'])
+        self.assertEqual(calls[0][0],'/api/public-research')
+        self.assertIn('questions',calls[0][1])
+        self.assertEqual(calls[1][0],'/api/ai-fill-form')
+        self.assertTrue(calls[1][1]['research_enabled'])
+        self.assertEqual(calls[1][1]['research_depth'],'balanced')
+        self.assertEqual(calls[1][1]['instruction_upload_ids'],['UP-GAP'])
+        self.assertIn('research_evidence',calls[1][1])
+        self.assertNotIn('competitors_alternatives',calls[1][1]['structured_form'])
 
     def test_user_can_answer_remaining_private_question(self):
         intake={'id':'AGI-ANS','project_id':0,'project_name':'Private Test','upload_id':'U','ai_fill':{'fields':{'budget_pricing_commercial_terms':{'value':'None','status':'assumption'}}},'field_count':1,'none_count':1}

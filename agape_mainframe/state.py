@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 from .platform_paths import user_data_root
 
-BUILD = "AGAPE-MAINFRAME-V5.5-UX-DOWNLOAD-QA"
+BUILD = "AGAPE-MAINFRAME-V5.6.1-CANONICAL-STATUS-SYNC"
 ROOT = Path(__file__).resolve().parent.parent
 LOCALAPPDATA = Path(os.environ.get("LOCALAPPDATA", str(ROOT)))
 PREVIOUS_DATA_ROOTS = [
@@ -225,9 +225,10 @@ def sync_external_work_status(external_job_id: str, payload: dict[str, Any]) -> 
     function updates recent_work on every poll and emits one matching terminal
     event for the original MAIN-* run so Activity never ends at START.
     """
-    status=str(payload.get("status") or payload.get("state") or "").upper().strip() or "UNKNOWN"
-    terminal=status in {"PASS","FAIL","BLOCKED","FAILED","COMPLETE","COMPLETED"}
-    mapped="PASS" if status in {"PASS","COMPLETE","COMPLETED"} else ("BLOCKED" if status=="BLOCKED" else ("FAIL" if status in {"FAIL","FAILED"} else status))
+    observed=payload.get("job") if isinstance(payload.get("job"),dict) else payload
+    status=str(observed.get("status") or observed.get("state") or "").upper().strip() or "UNKNOWN"
+    terminal=status in {"PASS","FAIL","BLOCKED","FAILED","COMPLETE","COMPLETED","SUCCESS","DONE"}
+    mapped="PASS" if status in {"PASS","COMPLETE","COMPLETED","SUCCESS","DONE"} else ("BLOCKED" if status=="BLOCKED" else ("FAIL" if status in {"FAIL","FAILED"} else status))
     raw=json.dumps(payload,ensure_ascii=False,default=str)[:200000]
     with db() as con:
         row=con.execute("SELECT * FROM recent_work WHERE external_job_id=? ORDER BY id DESC LIMIT 1",(str(external_job_id),)).fetchone()
@@ -247,7 +248,7 @@ def sync_external_work_status(external_job_id: str, payload: dict[str, Any]) -> 
         emitted=False
         if terminal and previous not in {"PASS","FAIL","BLOCKED","FAILED","COMPLETE","COMPLETED"} and run_id:
             message="Work completed" if mapped=="PASS" else ("Action required" if mapped=="BLOCKED" else "Work failed")
-            detail=str(payload.get("error") or payload.get("message") or "")[:8000]
+            detail=str(observed.get("error") or observed.get("message") or payload.get("error") or payload.get("message") or "")[:8000]
             con.execute("INSERT INTO events(created_at,run_id,capability,stage,status,message,detail) VALUES(?,?,?,?,?,?,?)",
                         (now_iso(),run_id,"workflow-bridge","complete" if mapped=="PASS" else "execute",mapped,message,detail))
             emitted=True
