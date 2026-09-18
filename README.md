@@ -75,6 +75,10 @@ The shared code includes:
 
 Some capabilities are intentionally platform-specific. For example, `winget` and `pywinauto` are Windows integrations and are not treated as required macOS/Linux dependencies.
 
+## R2.5.0 cross-platform preview
+
+The R2.5.0 preview line builds Windows, macOS, Linux and Android from one shared source branch. Android is a secure WebView wrapper for the configured Agape HTTPS endpoint; GitHub Actions verifies that the produced APK contains executable DEX code before publishing the artifact. The default Android endpoint is the existing Agape Tailscale Funnel URL and can be overridden at build time.
+
 ## Platform status
 
 | Platform | Shared source | Automated build | Download format | Status |

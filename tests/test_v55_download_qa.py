@@ -33,3 +33,18 @@ def test_full_dummy_browser_qa_script_is_bundled():
     text=script.read_text(encoding='utf-8')
     for marker in ['prepare_with_ai','research_own_progress_bar','download_finished_docx_real_click','retry_pdf_download_real_click','validate_browser_pdf']:
         assert marker in text
+
+
+def test_download_manager_is_current_job_only_and_creation_failures_do_not_say_retry_download():
+    js=(ROOT/'web'/'app.js').read_text(encoding='utf-8')
+    assert "String(item.jobId || '') === currentJob" in js
+    assert "DOWNLOAD_MANAGER.items = [];" in js
+    assert "DOWNLOAD_MANAGER.items = fresh.slice(0,80);" in js
+    assert "Result creation stopped before a new file was produced" in js
+
+
+def test_document_studio_build_marker_rejects_stale_child_service():
+    bridge=(ROOT/'agape_mainframe'/'bridge.py').read_text(encoding='utf-8')
+    studio=(ROOT/'recovered'/'agape-document-studio'/'document_studio.py').read_text(encoding='utf-8')
+    marker='R31.16-document-path-reliability-r2.2'
+    assert marker in bridge and marker in studio

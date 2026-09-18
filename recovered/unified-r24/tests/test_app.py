@@ -125,6 +125,17 @@ User-provided project notes:
         self.assertEqual(got['timeline'],'2027')
         self.assertEqual(got['budget_pricing'],'£150,000')
 
+
+    def test_saved_project_legacy_escaped_lines_seed_all_explicit_fields(self):
+        info=r"Saved Agape project selected as the source for AI brief filling.\nProject name: GreenStep Commercial Interiors Business Plan 2027\nOrganisation: GreenStep Commercial Interiors\nIndustry: Commercial interiors\nGeography: United Kingdom\nProduct / service: Commercial interior fit-out\nProblem / need: Expand sustainably\nTarget audience: Commercial property clients\nBudget / pricing: £150,000\nSuccess measures: Reach break-even in year one"
+        got=app.deterministic_source_fields('GreenStep Commercial Interiors Business Plan 2027',info,'')
+        self.assertEqual(got['organisation'],'GreenStep Commercial Interiors')
+        self.assertEqual(got['industry'],'Commercial interiors')
+        self.assertEqual(got['geography'],'United Kingdom')
+        self.assertEqual(got['product_service'],'Commercial interior fit-out')
+        self.assertEqual(got['budget_pricing'],'£150,000')
+        self.assertEqual(got['success_metrics'],'Reach break-even in year one')
+
     def test_all_none_ai_fill_cannot_erase_saved_project_facts(self):
         upload={'ok':True,'upload':{'id':'UP-SEED','name':'greenstep.txt','preview':'GreenStep source'}}
         ids=['organisation','recipient','industry','geography','product_service','problem_need','document_purpose','decision_requested','target_audience','value_proposition','budget_pricing','timeline','success_metrics','competitors_alternatives','constraints','tone','research_focus']

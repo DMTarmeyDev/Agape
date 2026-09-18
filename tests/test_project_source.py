@@ -126,6 +126,42 @@ class SavedProjectSourceTests(unittest.TestCase):
         self.assertIn('Budget is £150,000',post['project_info'])
         self.assertEqual(result['intake']['project_id'],0)
 
+
+    def test_legacy_literal_line_breaks_are_recovered_before_fact_extraction(self):
+        payload={
+            "project":{"id":5,"name":"GreenStep Commercial Interiors Business Plan 2027"},
+            "messages":{"messages":[{
+                "role":"user",
+                "content":r"Organisation: GreenStep Commercial Interiors\nIndustry: Commercial interiors\nGeography: United Kingdom\nBudget / pricing: £150,000"
+            }]},
+            "loop_settings":{},
+        }
+        text=bridge._saved_project_source(5,payload)
+        self.assertIn("Organisation: GreenStep Commercial Interiors\nIndustry: Commercial interiors",text)
+        self.assertNotIn(r"Commercial Interiors\nIndustry",text)
+
+    def test_new_auto_saved_project_uses_real_line_breaks(self):
+        with tempfile.TemporaryDirectory() as td:
+            db=pathlib.Path(td)/'dmt_core.sqlite3';self._make_core_db(db)
+            intake={
+                'ai_fill':{'fields':{
+                    'organisation':{'value':'GreenStep Commercial Interiors'},
+                    'document_purpose':{'value':'Business Plan'},
+                    'timeline':{'value':'2027'},
+                }},
+                'upload':{'preview':'Organisation: GreenStep Commercial Interiors\nIndustry: Commercial interiors'}
+            }
+            with patch.object(bridge,'_ensure_project_database',return_value=db):
+                saved=bridge._save_new_source_as_project(intake,{'instruction':'Create a bank-ready expansion business plan'},'', 'greenstep-source.docx')
+            con=sqlite3.connect(db)
+            try:
+                content=con.execute('SELECT content FROM messages WHERE project_id=? ORDER BY id DESC LIMIT 1',(saved['id'],)).fetchone()[0]
+            finally: con.close()
+            self.assertIn('Requested result:\nCreate a bank-ready expansion business plan',content)
+            self.assertIn('Source information:\nOrganisation: GreenStep Commercial Interiors',content)
+            self.assertNotIn(r'Requested result:\nCreate',content)
+            self.assertTrue(saved['name'].startswith('GreenStep Commercial Interiors Business Plan 2027'))
+
     def test_internal_mock_project_names_are_hidden(self):
         from agape_mainframe import bridge
         self.assertTrue(bridge._project_name_is_internal_test('Rollback Mock Project'))

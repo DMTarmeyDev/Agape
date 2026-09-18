@@ -64,7 +64,7 @@ class V56ResearchContinuityContract(unittest.TestCase):
     def test_v56_windows_launcher_targets_current_build(self):
         ps=(ROOT/'START-AGAPE-LATEST.ps1').read_text(encoding='utf-8')
         cmd=(ROOT/'OPEN AGAPE.cmd').read_text(encoding='utf-8')
-        self.assertIn('AGAPE-MAINFRAME-V5.6-RESEARCH-PROJECT-CONTINUITY',ps)
+        self.assertIn('AGAPE-MAINFRAME-V5.6.1-CANONICAL-STATUS-SYNC',ps)
         self.assertIn('START-AGAPE-LATEST.ps1',cmd)
         self.assertNotIn('V4.6',cmd)
 

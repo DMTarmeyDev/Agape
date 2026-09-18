@@ -1,0 +1,120 @@
+name: Cross-platform preview build
+
+on:
+  workflow_dispatch:
+    inputs:
+      agape_base_url:
+        description: HTTPS Agape URL embedded in the Android wrapper
+        required: true
+        default: https://agape-alpha.tail2a2d28.ts.net/
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: python -m pip install -U pip pytest
+      - name: Compile
+        run: python -m compileall -q agape_mainframe main.py SETUP-API-KEYS.py
+      - name: Regression tests
+        env:
+          AGAPE_MAINFRAME_DATA: ${{ runner.temp }}/agape-test-data
+          AGAPE_SECURITY_ROOT: ${{ runner.temp }}/agape-test-security
+        run: python -m pytest -q tests
+
+  desktop:
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: Agape-Windows-preview
+          - os: macos-latest
+            artifact: Agape-macOS-preview
+          - os: ubuntu-latest
+            artifact: Agape-Linux-preview
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install build dependencies
+        run: |
+          python -m pip install -U pip
+          python -m pip install -r requirements-build.txt
+      - name: Tests
+        env:
+          AGAPE_MAINFRAME_DATA: ${{ runner.temp }}/agape-test-data
+          AGAPE_SECURITY_ROOT: ${{ runner.temp }}/agape-test-security
+        run: python -m pytest -q tests
+      - name: Build Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          pyinstaller --noconfirm --clean --onefile --windowed --name Agape-Windows --collect-all keyring --add-data "web;web" --add-data "capabilities;capabilities" --add-data "recovered/agape-document-studio;recovered/agape-document-studio" --add-data "recovered/unified-r24;recovered/unified-r24" main.py
+          New-Item -ItemType Directory -Force release | Out-Null
+          Copy-Item dist/Agape-Windows.exe release/Agape-Windows.exe
+          Copy-Item API-KEYS.template.json release/API-KEYS.template.json
+      - name: Build macOS
+        if: runner.os == 'macOS'
+        run: |
+          pyinstaller --noconfirm --clean --onedir --windowed --name Agape --collect-all keyring --add-data "web:web" --add-data "capabilities:capabilities" --add-data "recovered/agape-document-studio:recovered/agape-document-studio" --add-data "recovered/unified-r24:recovered/unified-r24" main.py
+          mkdir -p release
+          ditto -c -k --sequesterRsrc --keepParent dist/Agape.app release/Agape-macOS.zip
+      - name: Build Linux
+        if: runner.os == 'Linux'
+        run: |
+          pyinstaller --noconfirm --clean --onefile --name Agape-Linux-x86_64 --collect-all keyring --add-data "web:web" --add-data "capabilities:capabilities" --add-data "recovered/agape-document-studio:recovered/agape-document-studio" --add-data "recovered/unified-r24:recovered/unified-r24" main.py
+          mkdir -p release
+          cp dist/Agape-Linux-x86_64 release/Agape-Linux-x86_64
+          chmod +x release/Agape-Linux-x86_64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: release/*
+          if-no-files-found: error
+
+  android:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+      - name: Install Android 36 SDK
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Set up Gradle 9.6
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.6.0'
+      - name: Build installable APK
+        env:
+          AGAPE_BASE_URL: ${{ inputs.agape_base_url }}
+        run: gradle --no-daemon -p android-app :app:assembleDebug -PagapeBaseUrl="$AGAPE_BASE_URL"
+      - name: Verify and stage APK
+        run: |
+          test -f android-app/app/build/outputs/apk/debug/app-debug.apk
+          unzip -l android-app/app/build/outputs/apk/debug/app-debug.apk | grep -q 'classes.dex'
+          cp android-app/app/build/outputs/apk/debug/app-debug.apk Agape-Android-V5.6.1-R2.5.0-debug.apk
+          sha256sum Agape-Android-V5.6.1-R2.5.0-debug.apk > Agape-Android-V5.6.1-R2.5.0-debug.apk.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Agape-Android-APK
+          path: |
+            Agape-Android-V5.6.1-R2.5.0-debug.apk
+            Agape-Android-V5.6.1-R2.5.0-debug.apk.sha256
+          if-no-files-found: error
