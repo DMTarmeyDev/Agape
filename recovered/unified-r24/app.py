@@ -1798,9 +1798,21 @@ def new_job(body: dict[str, Any]) -> dict[str, Any]:
     intake = get_intake(intake_id) if intake_id else None
     if project_id <= 0 and not intake:
         raise ValueError('PROJECT_OR_SOURCE_DOCUMENT_REQUIRED')
-    project = project_by_id(project_id) if project_id > 0 else None
+    project = None
+    if project_id > 0:
+        try:
+            project = project_by_id(project_id)
+        except Exception:
+            # Prepared document intakes are self-contained snapshots. If Core
+            # is unavailable or points at a different recovered database, the
+            # intake must still be able to create its result.
+            if not intake:
+                raise
     if project_id > 0 and not project:
-        raise ValueError('PROJECT_NOT_FOUND')
+        if intake:
+            project_id = 0
+        else:
+            raise ValueError('PROJECT_NOT_FOUND')
     if intake_id and not intake:
         raise ValueError('INTAKE_NOT_FOUND')
     if intake and project_id <= 0:

@@ -512,13 +512,18 @@ def _save_new_source_as_project(intake: dict[str,Any], body: dict[str,Any], sour
 
 def run_work(body: dict[str, Any], plan: dict[str, Any]) -> dict[str, Any]:
     task=str(body.get("task") or "").strip(); project_id=int(body.get("project_id") or 0); quality=str(body.get("quality") or "gold").lower()
-    adopted=ensure_existing_services(plan,project_id)
+    intake_id=str(body.get("intake_id") or "").strip()
+    # A prepared document intake is a complete source snapshot. The Projects
+    # database id is useful provenance, but it must never be a hard runtime
+    # dependency for document/research creation. This also protects jobs when
+    # the live Core service is using a different/recovered project database.
+    execution_project_id=0 if intake_id and str(plan.get("route") or "") in {"document","research"} else project_id
+    adopted=ensure_existing_services(plan,execution_project_id)
     if quality not in {"standard","gold"}:quality="gold"
     reviewer_count=max(2,min(10,int(body.get("reviewer_count") or 10)))
     file_name=str(body.get("file_name") or "").strip(); file_b64=str(body.get("file_data_base64") or "").strip()
     run_id="MAIN-"+time.strftime("%Y%m%d-%H%M%S")
     record_event(run_id,"mainframe","plan","PASS",plan.get("title") or "Work planned")
-    intake_id=str(body.get("intake_id") or "").strip()
     if not intake_id and file_name and file_b64:
         bridge=ensure_r24()
         if not bridge.get("ok"):
@@ -533,7 +538,7 @@ def run_work(body: dict[str, Any], plan: dict[str, Any]) -> dict[str, Any]:
         intake_id=str(p["intake"].get("id") or "")
         record_event(run_id,"documents","intake","PASS","Source prepared")
     job_body={
-        "project_id":project_id,"intake_id":intake_id,"instruction":task,"quality_mode":quality,
+        "project_id":execution_project_id,"intake_id":intake_id,"instruction":task,"quality_mode":quality,
         "reviewer_count":reviewer_count,"router":str(body.get("router") or "agape"),
         "format":str(body.get("format") or "docx"),"also_pdf":bool(body.get("also_pdf",True)),
     }
@@ -558,7 +563,7 @@ def run_work(body: dict[str, Any], plan: dict[str, Any]) -> dict[str, Any]:
         raise RuntimeError("WORK_SUBMIT_FAILED: "+json.dumps(p,ensure_ascii=False)[:1200])
     jid=str(p["job_id"])
     remember_work(str(body.get("title") or plan.get("title")),task,str(plan.get("route")),jid,"QUEUED",{
-        "run_id":run_id,"project_id":project_id,"intake_id":intake_id
+        "run_id":run_id,"project_id":execution_project_id,"source_project_id":project_id,"intake_id":intake_id
     })
     return {"ok":True,"mode":"delegated","job_id":jid,"run_id":run_id,"status_url":"/api/work/"+urllib.parse.quote(jid)}
 
