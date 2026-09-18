@@ -1,21 +1,21 @@
-# Publish Agape to GitHub
+# Publish Agape V5.6.1 R2.5.1 to GitHub
 
-This package contains the GitHub Actions needed to test on Windows/macOS/Linux and build release downloads from a version tag.
+For normal preview/testing, use the all-platform push/deploy script so work goes to a new branch and `main` stays unchanged.
 
-## Easiest Windows route
-
-1. Install Git and GitHub CLI (`gh`).
-2. Sign in with `gh auth login`.
-3. Open PowerShell in this source folder.
-4. Run:
+After that branch has been tested and merged, the release publisher can create the release tag:
 
 ```powershell
-.\PUBLISH-TO-GITHUB.ps1 -Repository "YOUR-GITHUB-NAME/agape" -Visibility public -Tag v5.5.0
+.\PUBLISH-TO-GITHUB.ps1 -Repository "DMTarmeyDev/Agape" -Visibility public -Tag "v5.6.1-r2.5.1"
 ```
 
-The script does not ask for or store a GitHub password/token. Authentication is handled by GitHub CLI.
+Before pushing, it runs:
 
-After the tag is pushed, GitHub Actions will run the tests and then publish the release files if the native builds pass.
+- public-release secret/private-file audit;
+- README/release-link audit;
+- Mainframe pytest suite;
+- Workflow Bridge pytest suite;
+- Git staged-diff whitespace checks.
 
+Pushing the tag triggers `.github/workflows/release.yml`. That workflow performs the full QA gate and builds Windows, macOS, Linux, Android and an iOS Simulator artifact, then publishes SHA-256 checksums with the GitHub Release.
 
-Before any commit is pushed, the publish script runs `scripts/public_audit.py`. It blocks obvious private keys, personal Windows user paths, databases, compiled Python files, and certificate/private-key files from the public release tree.
+The iOS Simulator artifact proves the iOS project compiles. A signed iPhone/iPad IPA requires Apple Developer signing credentials and provisioning, which should be stored as protected CI secrets rather than committed to the repository.

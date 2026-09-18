@@ -1,0 +1,235 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000001 /* AgapeMobileApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* AgapeMobileApp.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A10000000000000000000002 /* AgapeMobileApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgapeMobileApp.swift; sourceTree = "<group>"; };
+		A10000000000000000000003 /* Agape.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Agape.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A10000000000000000000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A10000000000000000000005 = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000006 /* AgapeMobile */,
+				A10000000000000000000007 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A10000000000000000000006 /* AgapeMobile */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000002 /* AgapeMobileApp.swift */,
+			);
+			path = AgapeMobile;
+			sourceTree = "<group>";
+		};
+		A10000000000000000000007 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000003 /* Agape.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A10000000000000000000008 /* AgapeMobile */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A10000000000000000000009 /* Build configuration list for PBXNativeTarget "AgapeMobile" */;
+			buildPhases = (
+				A1000000000000000000000A /* Sources */,
+				A10000000000000000000004 /* Frameworks */,
+				A1000000000000000000000B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AgapeMobile;
+			productName = Agape;
+			productReference = A10000000000000000000003 /* Agape.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A1000000000000000000000C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					A10000000000000000000008 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = A1000000000000000000000D /* Build configuration list for PBXProject "AgapeMobile" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A10000000000000000000005;
+			productRefGroup = A10000000000000000000007 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A10000000000000000000008 /* AgapeMobile */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A1000000000000000000000B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A1000000000000000000000A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000001 /* AgapeMobileApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A1000000000000000000000E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A1000000000000000000000F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		A10000000000000000000010 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				AGAPE_BASE_URL = "https://agape-alpha.tail2a2d28.ts.net/";
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 251;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_AGAPE_BASE_URL = "$(AGAPE_BASE_URL)";
+				INFOPLIST_KEY_CFBundleDisplayName = Agape;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 5.6.1;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.dmtarmey.agape.ios;
+				PRODUCT_NAME = Agape;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A10000000000000000000011 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				AGAPE_BASE_URL = "https://agape-alpha.tail2a2d28.ts.net/";
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 251;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_AGAPE_BASE_URL = "$(AGAPE_BASE_URL)";
+				INFOPLIST_KEY_CFBundleDisplayName = Agape;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 5.6.1;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.dmtarmey.agape.ios;
+				PRODUCT_NAME = Agape;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A10000000000000000000009 /* Build configuration list for PBXNativeTarget "AgapeMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A10000000000000000000010 /* Debug */,
+				A10000000000000000000011 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1000000000000000000000D /* Build configuration list for PBXProject "AgapeMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1000000000000000000000E /* Debug */,
+				A1000000000000000000000F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A1000000000000000000000C /* Project object */;
+}

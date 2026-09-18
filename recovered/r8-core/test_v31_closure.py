@@ -17,7 +17,7 @@ class V31ClosureTests(unittest.TestCase):
     def test_menu_branding(self):
         t=(ROOT/'index.html').read_text(encoding='utf-8')
         self.assertIn('Agape Core',t); self.assertIn('Early Alpha',t); self.assertNotIn('DMT Studio',t)
-        
+
         self.assertIn('>Project Workspace<',t)
         self.assertIn('>Settings<',t)
         for label in ('Project','Models & Providers','Automation','Memory & Database','Tools & Terminal','Templates','Advanced'): self.assertIn('>'+label+'<',t)

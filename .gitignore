@@ -24,3 +24,10 @@ api-keys.json
 credentials/
 secrets/
 .agape-validation/
+# Native mobile build output
+android-app/.gradle/
+android-app/**/build/
+ios-derived/
+DerivedData/
+xcuserdata/
+*.xcuserstate

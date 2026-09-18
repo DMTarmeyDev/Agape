@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="agape_black">#111111</color>
+    <color name="agape_white">#FFFFFF</color>
+    <color name="agape_surface">#F6F6F6</color>
+    <color name="agape_error">#9B1C1C</color>
+</resources>

@@ -126,4 +126,3 @@ def choose_project_model(model_names, task: str, project=None, messages=None, se
     }
     reason='PROJECT_AWARE_ROUTER: '+(', '.join(complexity_reasons[:4]) if complexity_reasons else ('light project context' if kind=='coding' else 'general project chat'))
     return {'ok':True,'model':selected,'task_type':kind,'reason':reason,'project_loaded':True,'context':context_summary,'scores':scores}
-

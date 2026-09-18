@@ -19,12 +19,17 @@ jobs:
         run: python -m pip install -U pip pytest
       - name: Public release audit
         run: python scripts/public_audit.py
+      - name: README and release-link contract audit
+        run: python scripts/check_repository_links.py
       - name: Compile
         run: python -m compileall -q agape_mainframe main.py SETUP-API-KEYS.py
       - name: Tests
         env:
           AGAPE_MAINFRAME_DATA: ${{ runner.temp }}/agape-test-data
           AGAPE_SECURITY_ROOT: ${{ runner.temp }}/agape-test-security
+        run: python -m pytest -q tests
+      - name: Workflow Bridge tests
+        working-directory: recovered/unified-r24
         run: python -m pytest -q tests
   full-qa:
     needs: test

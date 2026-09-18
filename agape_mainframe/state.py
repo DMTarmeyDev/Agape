@@ -350,4 +350,3 @@ def get_intake_prepare_job(job_id: str) -> dict[str, Any] | None:
             out["result"] = {"raw": raw}
     out["ok"] = out.get("status") not in {"FAILED", "ERROR"}
     return out
-

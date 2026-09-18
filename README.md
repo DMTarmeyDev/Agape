@@ -1,171 +1,225 @@
 # Agape
 
-<!-- AGAPE_GITHUB_BADGES_BEGIN -->
 [![CI](https://github.com/DMTarmeyDev/Agape/actions/workflows/ci.yml/badge.svg)](https://github.com/DMTarmeyDev/Agape/actions/workflows/ci.yml)
+[![Cross-platform tests](https://github.com/DMTarmeyDev/Agape/actions/workflows/test.yml/badge.svg)](https://github.com/DMTarmeyDev/Agape/actions/workflows/test.yml)
 [![CodeQL](https://github.com/DMTarmeyDev/Agape/actions/workflows/codeql.yml/badge.svg)](https://github.com/DMTarmeyDev/Agape/actions/workflows/codeql.yml)
-[![GitHub stars](https://img.shields.io/github/stars/DMTarmeyDev/Agape?style=flat)](https://github.com/DMTarmeyDev/Agape/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/DMTarmeyDev/Agape)](https://github.com/DMTarmeyDev/Agape/issues)
-[![Last commit](https://img.shields.io/github/last-commit/DMTarmeyDev/Agape)](https://github.com/DMTarmeyDev/Agape/commits/main)
-<!-- AGAPE_GITHUB_BADGES_END -->
+[![GitHub stars](https://img.shields.io/github/stars/DMTarmeyDev/Agape?style=flat)](https://github.com/DMTarmeyDev/Agape/stargazers)
 
-
-Human-first AI workspace for projects, documents, coding, automation, testing and model/tool routing.
+**Agape V5.6.1 / R2.5.1 Public Alpha** is a human-first AI workspace for projects, documents, coding, automation, testing, model/tool routing, checkpoints and recovery.
 
 ## Download Agape
 
-### Windows
+The safest download link is the GitHub Releases page. It remains valid even when a release asset name changes or a new platform build is added:
 
-**Current public application line: V5.5 Public Alpha**
+[**Open the latest Agape release**](https://github.com/DMTarmeyDev/Agape/releases/latest)
 
-[**Download the latest Windows EXE**](../../releases/latest/download/Agape-Windows.exe)
+Expected release assets are:
 
-If the direct EXE link is not yet present, open the [latest GitHub Release](../../releases/latest) and choose the Windows asset. The repository release workflow builds `Agape-Windows.exe` on a native GitHub Windows runner from the same source code in this repository.
+| Platform | Release asset | Status |
+|---|---|---|
+| Windows 10/11 | `Agape-Windows.exe` | Primary Alpha desktop build |
+| macOS | `Agape-macOS.zip` | Native desktop preview; signing/notarisation still required |
+| Linux x86_64 | `Agape-Linux-x86_64` | Native technical preview |
+| Android 10+ | `Agape-Android-debug.apk` | Installable Alpha APK; debug signed |
+| iPhone/iPad | `Agape-iOS-Simulator.zip` | iOS Simulator preview; physical-device distribution requires Apple signing |
+| All release files | `SHA256SUMS.txt` | SHA-256 verification list |
 
-> Windows SmartScreen may warn about unsigned community builds until code-signing is configured. Check the SHA-256 file attached to the release before running a downloaded build.
+The release workflow creates these assets only after the repository QA gate and platform build jobs pass. Do not use a guessed direct latest-asset URL when an asset has not yet been published; use the Releases page above.
 
-### macOS
+> Windows SmartScreen and Apple Gatekeeper may warn about unsigned Alpha builds. Public production distribution should use Windows code signing and Apple signing/notarisation.
 
-[Download the latest macOS build](../../releases/latest/download/Agape-macOS.zip)
+## Platform status
 
-The macOS build is generated from the same source code on a native GitHub macOS runner. Apple signing/notarisation should be configured before describing a public macOS build as trusted/no-warning.
+| Platform | Shared Agape backend/source | Native wrapper/build | Automated validation |
+|---|---:|---:|---:|
+| Windows 10/11 | Yes | PyInstaller `.exe` | GitHub Windows runner |
+| macOS | Yes | PyInstaller `.app` in `.zip` | GitHub macOS runner |
+| Linux x86_64 | Yes | PyInstaller binary | GitHub Ubuntu runner |
+| Android 10+ | Yes | Native Java WebView shell | GitHub Android SDK/Gradle build |
+| iPhone/iPad | Yes | Native SwiftUI/WKWebView shell | GitHub macOS iOS Simulator build |
+| GitHub Codespaces | Yes | Browser-hosted development preview | Devcontainer + deployment helper |
 
-### Linux
+Windows remains the primary desktop validation target. Android is an Alpha mobile wrapper. The iOS project is built automatically for the iOS Simulator; a signed IPA/TestFlight/App Store build requires Apple Developer signing credentials and cannot be truthfully described as a public installable iPhone package until those credentials are configured.
 
-[Download the latest Linux x86_64 build](../../releases/latest/download/Agape-Linux-x86_64)
+## How Agape is structured
 
-The Linux executable is generated on GitHub's Ubuntu runner. Make it executable after download if required: `chmod +x Agape-Linux-x86_64`.
+Agape keeps one shared Python/web application for the core workflow and uses platform-specific launchers around it. The shared code includes:
 
-## Public Alpha
+- Source -> Review -> Result document workflow;
+- projects, results, workspace filing and right-click actions;
+- automatic model/provider routing;
+- local and cloud AI provider support;
+- Aider, OpenHands, Open Interpreter and Agape Native coding-agent integration points;
+- browser real-click QA with Playwright;
+- optional accessibility, API, security, load and mobile testing tools;
+- checkpoints, rollback/recovery and persistent local state;
+- document creation and finished-result download management;
+- public-research and brief-change flows;
+- source templates, including the Agape end-to-end test template.
 
-Agape is currently a **public Alpha**. Windows is the primary Alpha platform. Linux is an Alpha/technical-preview target and macOS is a development-preview target until native validation is complete. Alpha means the project is usable for testing and development, but interfaces and packaging can still change.
+The normal interface is human-first. Technical services, models and diagnostics stay behind advanced controls unless they are needed.
+
+## Mobile apps
+
+### Android
+
+Android source is in [`android-app/`](android-app/). The app opens the configured HTTPS Agape endpoint, defaults phones to the touch-friendly web-app view, supports the system file picker, uses Android Download Manager for normal HTTPS downloads, blocks cleartext traffic and never bypasses TLS errors.
+
+See [`README-ANDROID.md`](README-ANDROID.md).
+
+### iPhone and iPad
+
+iOS source is in [`ios-app/`](ios-app/). It uses SwiftUI and WKWebView, keeps Agape navigation inside the configured HTTPS host, opens external links through iOS, supports normal WebKit file selection, and provides reload/back controls plus an offline/error state.
+
+See [`README-IOS.md`](README-IOS.md).
+
+Both mobile wrappers default to:
+
+`https://agape-alpha.tail2a2d28.ts.net/`
+
+The endpoint can be replaced at build time. The Agape backend must be reachable for the mobile wrappers to work.
+
+## GitHub Codespaces
+
+The repository contains [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json) and [`scripts/deploy_codespace_preview.sh`](scripts/deploy_codespace_preview.sh).
+
+Inside a Codespace:
+
+```bash
+bash scripts/deploy_codespace_preview.sh "$(git branch --show-current)"
+```
+
+The Mainframe uses port `8850`. Internal Document Studio and Workflow Bridge ports remain `8851` and `8852`.
+
+## Tailscale
+
+The current Alpha public endpoint is:
+
+`https://agape-alpha.tail2a2d28.ts.net/`
+
+The Windows all-platform deployment script checks the existing Tailscale Funnel first and does not reset a healthy mapping. If no mapping exists and Tailscale is connected, it can create a Funnel to Mainframe port `8850`.
 
 ## API keys
 
-API keys are optional. Agape can run with local-model features without a cloud-provider key. There are three supported setup paths:
+API keys are optional. Agape can use local-model features without a cloud-provider key.
 
-1. **First-run setup:** Agape offers providers one at a time. Add one key, add another, or skip everything.
-2. **Settings > AI provider keys:** add, replace, import, or remove individual provider keys later.
-3. **Template file:** copy `API-KEYS.template.json` to `API-KEYS.local.json`, fill only the providers you use, and start Agape. Missing keys are imported without overwriting keys already saved in Agape.
+Supported setup paths:
 
-`API-KEYS.local.json` is ignored by Git and must never be committed. Saved keys use the operating system credential store when the packaged build has a usable keyring backend (for example Windows Credential Manager or macOS Keychain). If no OS credential backend is available, Agape falls back to a private local key file in its user-data directory rather than the public source tree. Agape's key-status API reports only whether a provider is configured; it never returns the key value. Environment variables such as `OPENAI_API_KEY` remain supported.
+1. first-run setup asks for providers one at a time;
+2. **Settings > AI provider keys** adds, replaces, imports or removes a provider later;
+3. copy [`API-KEYS.template.json`](API-KEYS.template.json) to `API-KEYS.local.json` and fill only the providers you use.
 
-You can also run:
+`API-KEYS.local.json` is ignored by Git and must never be committed. You can also run:
 
 ```bash
 python SETUP-API-KEYS.py
 ```
 
-This asks about one provider at a time and hides pasted key values while typing.
-
-## Source code
-
-Agape uses **one shared source codebase** for Windows, macOS and Linux. Platform-specific functions are kept behind platform-aware adapters rather than maintaining three separate copies of Agape.
-
-The shared code includes:
-
-- the human-first project/document workflow;
-- Workspace with project/results filing, to-do and job panels;
-- right-click context menus;
-- automatic AI/model routing;
-- coding-engine support for Agape Native, Aider, OpenHands and Open Interpreter;
-- optional VS Code/Theia code-management integration;
-- browser real-click testing with Playwright;
-- optional accessibility, API, security, quality and load testing tools;
-- checkpoints/recovery and persistent local state.
-
-Some capabilities are intentionally platform-specific. For example, `winget` and `pywinauto` are Windows integrations and are not treated as required macOS/Linux dependencies.
-
-## Platform status
-
-| Platform | Shared source | Automated build | Download format | Status |
-|---|---|---|---|---|
-| Windows 10/11 | Yes | GitHub Windows runner | `.exe` | Primary release platform |
-| macOS | Yes | GitHub macOS runner | `.app` inside `.zip` | Cross-platform build path ready; native validation/signing still required |
-| Linux x86_64 | Yes | GitHub Ubuntu runner | standalone binary | Cross-platform build path ready; distro validation still required |
-
-Windows remains the primary validation target until it reaches the desired stability. macOS/Linux should not be labelled fully validated until their GitHub native-runner tests and real-machine checks pass.
-
 ## Running from source
 
-Requires Python 3.11+ (3.12 recommended).
+Python 3.11+ is supported; Python 3.12 is the release/CI reference version.
 
 ```bash
-python -m pip install -U pytest
-python main.py
+python -m pip install -r requirements-runtime.txt
+python main.py --port 8850
 ```
 
-Agape opens at `http://127.0.0.1:8850/` and the desktop launcher opens the default browser automatically.
+Local Mainframe URL:
 
-On Linux/macOS you can also use:
+`http://127.0.0.1:8850/`
 
-```bash
-./platform/start-agape.sh
-```
-
-On Windows:
+Windows launcher:
 
 ```text
 platform\START-AGAPE-WINDOWS.cmd
 ```
 
+Linux/macOS launcher:
+
+```bash
+./platform/start-agape.sh
+```
+
 ## Testing
 
-Run the active test suite with:
+Main regression suite:
 
 ```bash
 python -m pytest -q tests
 ```
 
-GitHub Actions runs the suite on Windows, macOS and Linux on every push/pull request. Tagged releases are built only after the platform test job succeeds.
-
-## Creating a release
-
-Push the source to GitHub, then create and push a version tag:
+Workflow Bridge regression suite:
 
 ```bash
-git tag v5.5.0
-git push origin v5.5.0
+cd recovered/unified-r24
+python -m pytest -q tests
 ```
 
-The release workflow then:
+Full dummy/browser workflow QA:
 
-1. tests the repository on native runners;
-2. builds `Agape-Windows.exe`;
-3. builds `Agape-macOS.zip`;
-4. builds `Agape-Linux-x86_64`;
-5. creates `SHA256SUMS.txt`;
-6. publishes the files to GitHub Releases.
+```bash
+python scripts/full_dummy_qa.py --output .agape-validation/full-qa
+```
 
-GitHub Releases is the preferred binary distribution location. The source repository should contain source code; executable builds belong in Releases rather than being committed into Git history.
+README/repository-link contract audit:
 
-## Current Windows feature line
+```bash
+python scripts/check_repository_links.py
+```
 
-V5.5 includes the Workspace/right-click work from V5.0/V5.1, optional Testing Tools from V5.2, the cross-platform release structure from V5.3, public-release/API-key onboarding from V5.4, and the V5.5 Review/download reliability pass. V5.5 collapses missing-information and brief-change panels by default, adds a dedicated research progress display and Download Manager, fixes finished-result downloads to use the active Workflow Bridge on port 8852, and adds an isolated 22-step full dummy QA release gate.
+GitHub Actions also validates Windows, macOS and Linux Python behaviour, performs CodeQL analysis, builds the Android APK and compiles the iOS Simulator app.
 
-The first-run flow keeps API setup optional and deliberately asks for one provider at a time to avoid confusing users with a wall of credential fields. Keys can always be added later in Settings.
+## Preview build
 
-For detailed development history and previous release notes, see [`docs/README-V5.2-DETAILS.md`](docs/README-V5.2-DETAILS.md) and the `CHANGES-*.md` files.
+The **Cross-platform preview build** workflow is manually dispatchable from GitHub Actions. It builds Windows, macOS, Linux, Android and iOS Simulator artifacts from the selected branch without merging it into `main`.
+
+The one-command Windows deployment package uses the same workflow and also:
+
+1. validates the exact source payload;
+2. backs up the current local Agape source;
+3. updates/restarts only Mainframe port `8850`;
+4. preserves internal ports `8851` and `8852`;
+5. verifies the existing Tailscale public path;
+6. creates a new GitHub test/release branch and pull request;
+7. updates or creates an Agape Codespace on that branch;
+8. triggers and waits for the all-platform preview workflow;
+9. downloads and verifies the produced artifacts.
+
+The script deliberately leaves `main` unmerged so the branch and binaries can be tested first.
+
+## Creating a GitHub release
+
+After the release branch has been tested and merged, create a version tag:
+
+```bash
+git tag v5.6.1-r2.5.1
+git push origin v5.6.1-r2.5.1
+```
+
+The release workflow then runs QA and publishes the desktop, Android, iOS Simulator and checksum assets to GitHub Releases.
+
+## Current feature line
+
+V5.6.1 keeps the V5.x human-first workflow and adds the current reliability work: canonical cross-page status synchronisation, saved-project context preservation, Source templates, loopback session compatibility, permanent project deletion, projectless document-job repair, cross-platform preview packaging, Android mobile packaging, iOS mobile source/build validation, Codespaces deployment and safer release/download links.
+
+For older development history, see [`docs/README-V5.2-DETAILS.md`](docs/README-V5.2-DETAILS.md) and the historical `CHANGES-*.md` files.
 
 ## Security
 
-Agape does not require Microsoft Defender to be disabled and should not silently add antivirus exclusions. Release binaries should be accompanied by SHA-256 hashes. For public distribution, Windows code signing and Apple signing/notarisation should be added before presenting builds as production-trusted packages.
+Agape does not require Microsoft Defender to be disabled and should not silently add antivirus exclusions. Release binaries should carry SHA-256 hashes. API secrets, databases, certificate/private-key files and local credential files are excluded from public publishing by the repository audit.
 
+See [`SECURITY.md`](SECURITY.md). Do not post vulnerabilities publicly.
 
-## Licence
+## Project resources
 
-See [`LICENSE`](LICENSE). The current Alpha repository is source-available. Third-party dependencies retain their own licences.
-
-<!-- AGAPE_GITHUB_COMMUNITY_BEGIN -->
-## Community, support and project status
-
-Agape is under active **alpha** development. The project is focused on human-first AI workflows, model/provider flexibility, safe automation, testing, checkpoints, and rollback.
-
-- **Questions and ideas:** use [GitHub Discussions](https://github.com/DMTarmeyDev/Agape/discussions).
-- **Bugs and feature requests:** use [GitHub Issues](https://github.com/DMTarmeyDev/Agape/issues).
-- **Contributing:** see [CONTRIBUTING.md](CONTRIBUTING.md).
-- **Support:** see [SUPPORT.md](SUPPORT.md).
-- **Security:** see [SECURITY.md](SECURITY.md) and avoid posting vulnerabilities publicly.
-- **Roadmap:** see [ROADMAP.md](ROADMAP.md).
-
-If Agape is useful to you, starring the repository helps other people discover the project.
-<!-- AGAPE_GITHUB_COMMUNITY_END -->
+- [Latest release](https://github.com/DMTarmeyDev/Agape/releases/latest)
+- [All releases](https://github.com/DMTarmeyDev/Agape/releases)
+- [GitHub Actions](https://github.com/DMTarmeyDev/Agape/actions)
+- [Issues](https://github.com/DMTarmeyDev/Agape/issues)
+- [Discussions](https://github.com/DMTarmeyDev/Agape/discussions)
+- [Roadmap](ROADMAP.md)
+- [Contributing](CONTRIBUTING.md)
+- [Support](SUPPORT.md)
+- [Code of conduct](CODE_OF_CONDUCT.md)
+- [Licence](LICENSE)

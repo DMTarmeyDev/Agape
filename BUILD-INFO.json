@@ -12,11 +12,11 @@
   "document_studio": "R31.16",
   "gold_review_default": 3,
   "release_tests": {
-    "mainframe": "138/138 PASS",
-    "workflow_bridge": "56/56 PASS",
+    "mainframe": "177/177 PASS",
+    "workflow_bridge": "59/59 PASS",
     "provider_preflight": "PASS",
     "activity_terminal_sync": "PASS",
-    "javascript_syntax": "PASS",
+    "javascript_syntax": "PASS (web/app.js + web/project_templates.js)",
     "python_compile": "PASS",
     "document_studio_import": "PASS (R31.16); targeted Findings/Analysis repair regression PASS; full LibreOffice conversion self-test runs on Windows installer host",
     "windows_sqlite_close": "PASS",
@@ -34,7 +34,10 @@
     "finished_document_download": "PASS (current Workflow Bridge port 8852; DOCX/PDF real-byte validation; failure + Retry flow PASS)",
     "review_disclosure": "PASS (user-specific missing information separated from public research; extra-information section hidden when unnecessary and collapsed by default when researchable)",
     "research_progress": "PASS (public research panel collapsed by default; dedicated progress bar exercised; panel hides after public gaps are resolved)",
-    "download_manager": "PASS (preparation stage/progress/ETA/instructions/download/retry/download-again/open-folder exercised)"
+    "download_manager": "PASS (preparation stage/progress/ETA/instructions/download/retry/download-again/open-folder exercised)",
+    "qa_automation": "177 root regression tests + 59 Workflow Bridge tests + 25-step full dummy/browser QA. Public audit, README/link contract audit and Python compile pass.",
+    "ios_source": "native SwiftUI/WKWebView project added; GitHub macOS workflow compiles unsigned iOS Simulator app; physical-device signing requires Apple Developer credentials",
+    "android_source": "Android API 36 / AGP 9.4.0 / Gradle 9.6.0 / JDK 17 build contract; debug APK workflow verifies classes.dex"
   },
   "installer_security": "explicit user approval + exact-package SHA-256 trust + audit/revoke; no Defender exclusions; no ExecutionPolicy Bypass in normal install path",
   "saved_project_source": "read-only local SQLite snapshot first; Core HTTP optional fallback; downstream intake independent of Core after snapshot",
@@ -60,5 +63,19 @@
   "download_reliability": "finished-result proxy follows the active Workflow Bridge endpoint (8852), preserves upstream HTTP errors, and is covered by DOCX/PDF byte-validation plus retry QA.",
   "review_ui": "Private/user-specific questions and public-research opportunities are separate. Extra-information is omitted when unnecessary, collapsed when researchable, and disappears after research resolves the public gaps.",
   "v56": "Public research disclosure, real evidence collection, project auto-save, persistent multi-job downloads, path healing, QA selector repair.",
-  "v561": "Canonical cross-page status synchronization: unfinished jobs refresh from Workflow Bridge and Projects/Results/Workspace share one status source."
+  "v561": "Canonical cross-page status synchronization: unfinished jobs refresh from Workflow Bridge and Projects/Results/Workspace share one status source.",
+  "saved_project_context_r23": "legacy escaped-line recovery; real-newline persistence; source-fact naming; concise unresolved review UI",
+  "source_template_library": "R2.4.4 data-driven Source dropdown; Blank + bundled templates; Agape full-system source test retained across full rebuilds",
+  "local_session_compatibility": "R2.4.4 server-side loopback-only one-retry on SESSION_REQUIRED using Core local token; token never exposed to browser or remote hosts",
+  "web_revision": "R2.4.4-TEMPLATES-SESSION",
+  "cross_platform_release": "V5.6.1-R2.5.1",
+  "android_version": "5.6.1-r2.5.1-alpha",
+  "android_default_url": "https://agape-alpha.tail2a2d28.ts.net/",
+  "project_delete": "R2.4.5",
+  "projectless_document_jobs": "R2.4.6",
+  "ios_version": "5.6.1-r2.5.1-alpha",
+  "mobile_platforms": "Android native WebView wrapper + iOS native SwiftUI/WKWebView wrapper using the configured HTTPS Agape endpoint",
+  "release_download_policy": "README links to GitHub Releases rather than assuming unpublished latest/download asset paths; CI checks relative links and release asset contract",
+  "github_codespaces": "devcontainer + branch deployment helper on ports 8850/8851/8852",
+  "tailscale_public_url": "https://agape-alpha.tail2a2d28.ts.net/"
 }

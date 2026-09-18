@@ -31,6 +31,9 @@ jobs:
             python -m pip install -r "$req"
           done < <(find . -maxdepth 4 -type f -name "requirements.txt" -print)
 
+      - name: README and release-link contract audit
+        run: python scripts/check_repository_links.py
+
       - name: Compile Python sources
         shell: bash
         run: |

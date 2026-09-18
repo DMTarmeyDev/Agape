@@ -176,7 +176,7 @@ class FakeDocumentStudio(BaseHTTPRequestHandler):
     def log_message(self,*args): return
     def do_GET(self):
         if self.path.startswith('/api/health'):
-            raw=json.dumps({'ok':True,'version':'R31.16'}).encode(); self.send_response(200); self.send_header('Content-Type','application/json'); self.send_header('Content-Length',str(len(raw))); self.end_headers(); self.wfile.write(raw); return
+            raw=json.dumps({'ok':True,'version':'R31.16','build_id':'R31.16-document-path-reliability-r2.2'}).encode(); self.send_response(200); self.send_header('Content-Type','application/json'); self.send_header('Content-Length',str(len(raw))); self.end_headers(); self.wfile.write(raw); return
         self.send_error(404)
 
 

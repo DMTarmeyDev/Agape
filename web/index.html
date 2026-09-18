@@ -41,6 +41,13 @@
         </div>
 
         <div id="sourcePastePanel" class="source-panel">
+          <div class="source-template-picker">
+            <label class="source-template-field"><span>Template <small>(optional)</small></span>
+              <select id="sourceTemplateSelect" aria-label="Choose a source template"><option value="">Blank source</option></select>
+            </label>
+            <button id="loadSourceTemplate" type="button" class="secondary" disabled>Load template</button>
+          </div>
+          <p id="sourceTemplateHelp" class="muted source-template-help">Start blank, or choose a built-in template and load it into the editable source box.</p>
           <label class="full"><span>Paste your source text</span>
             <textarea id="sourceText" rows="10" spellcheck="true" autocapitalize="sentences" placeholder="Paste notes, an existing proposal, business information, rough ideas or anything Agape should use…"></textarea>
           </label>
@@ -69,10 +76,6 @@
 
         <div id="sourceStatus" class="notice source-status">Paste some text to continue.</div>
 
-        <details id="projectStarterDetails" class="project-starters">
-          <summary>Start from a project template <span class="optional">optional</span></summary>
-          <div class="details-body"><p class="muted">Load a prepared project brief, then edit anything you want before Agape starts.</p><div id="projectStarterList"></div></div>
-        </details>
 
         <label class="full"><span>What result do you want? <small>(optional)</small></span>
           <textarea id="task" rows="3" spellcheck="true" autocapitalize="sentences" placeholder="Example: Turn this into a bank-ready UK business plan. Keep supplied facts and research safe public gaps."></textarea>
@@ -198,8 +201,16 @@
     <section id="settings" class="page"><div class="card">
       <h2>Settings</h2><p class="muted">Normal use needs very few settings. Technical controls stay under Advanced.</p>
       <div class="settings-grid">
-        <div class="setting"><h3>Experience</h3><select id="settingExperience"><option value="basic">Basic · Just do it for me</option><option value="standard">Standard · Useful choices</option><option value="advanced">Advanced · Full control</option></select><button id="saveExperience">Save</button></div>
+        <div class="setting"><h3>Experience</h3><select id="settingExperience"><option value="basic">Essential · Low use</option><option value="standard">Standard · Medium use</option><option value="advanced">Full Developer/Admin · High use</option></select><button id="saveExperience">Save</button></div>
         <div class="setting"><h3>Default document quality</h3><select id="settingQuality"><option value="standard">Create Now · faster</option><option value="gold">Gold Standard · deeper review</option></select><button id="saveQuality">Save</button></div>
+      </div>
+      <div class="setting install-profile-settings"><h3>Installation profile</h3><p class="muted">Choose how much of Agape to install on this computer. Heavy developer tools stay out of Essential and Standard unless you install them separately.</p>
+        <div class="profiles install-profiles">
+          <button class="profile" id="installProfileBasic"><b>Essential</b><span>Low use</span><small>Core Agape, projects, documents and research. No heavy developer/security/mobile toolchain.</small></button>
+          <button class="profile" id="installProfileStandard"><b>Standard</b><span>Medium use</span><small>Add Git, VS Code, Node, Chromium QA, accessibility/API/performance testing and development workflows.</small></button>
+          <button class="profile" id="installProfileAdvanced"><b>Full Developer/Admin</b><span>High use</span><small>Add OpenHands/WSL, ZAP/Java, load testing and Android/Appium tooling. Large install.</small></button>
+        </div>
+        <div id="installProfileStatus" class="notice muted">Nothing will be installed until you choose a profile and confirm it.</div>
       </div>
       <div class="setting coding-settings"><h3>Coding tools</h3><p class="muted">Choose defaults for software work. Coding uses a coding-specialist model by default; the model, agent and code manager remain separate so you can test combinations.</p>
         <div class="settings-grid">
@@ -241,7 +252,7 @@
 
 <div id="setup" class="overlay hidden"><div class="modal">
   <div class="setup-progress"><span class="on">1</span><span>2</span><span>3</span><span>4</span></div>
-  <div id="setup1" class="setup-step"><h2>How would you like Agape to work?</h2><div class="profiles"><button class="profile selected" data-exp="basic"><b>Basic</b><span>Just do it for me</span><small>Documents, research and automatic AI choices.</small></button><button class="profile" data-exp="standard"><b>Standard</b><span>Useful choices</span><small>Add project development, local AI and background work.</small></button><button class="profile" data-exp="advanced"><b>Advanced</b><span>Full control</span><small>Developer tools and specialist capabilities.</small></button></div><p id="recommendation" class="notice"></p><button id="setupNext" class="primary large">Continue</button></div>
+  <div id="setup1" class="setup-step"><h2>How would you like Agape to work?</h2><div class="profiles"><button class="profile selected" data-exp="basic"><b>Essential</b><span>Low use</span><small>Documents, research and automatic AI choices with the smallest install.</small></button><button class="profile" data-exp="standard"><b>Standard</b><span>Medium use</span><small>Add project development, browser QA and common developer tools.</small></button><button class="profile" data-exp="advanced"><b>Full Developer/Admin</b><span>High use</span><small>Add specialist security, mobile, local-AI and agentic developer tooling.</small></button></div><p id="recommendation" class="notice"></p><button id="setupNext" class="primary large">Continue</button></div>
   <div id="setup2" class="setup-step hidden"><h2>Recommended for this computer</h2><p id="systemSummary"></p><div id="setupCaps"></div><button id="setupBack">Back</button><button id="setupApply" class="primary">Use these choices</button></div>
   <div id="setup3" class="setup-step hidden"><h2>Connect an AI provider (optional)</h2><p class="muted">Add one key at a time so setup stays clear. You can skip this completely, use local models, or add keys later in Settings.</p><div class="setting"><label>Provider</label><select id="setupKeyProvider"></select></div><div class="setting"><label>API key</label><input id="setupKeyValue" type="password" autocomplete="off" placeholder="Paste one key"><label class="muted"><input id="setupShowKey" type="checkbox"> Show while typing</label></div><div class="row"><button id="setupSaveKey" class="primary">Save this key</button><button id="setupImportKeys" class="secondary">Import API-KEYS.local.json</button></div><div id="setupKeyStatus" class="notice muted">No key is required to continue.</div><div class="row"><button id="setupKeysContinue" class="primary large">Continue</button></div></div>
   <div id="setup4" class="setup-step hidden"><h2>Agape is ready</h2><p>Source → Review → Result. Agape handles the technical choices.</p><button id="finishSetup" class="primary large">Start Agape</button></div>

@@ -238,32 +238,12 @@ def run(base_url: str = "http://127.0.0.1:8850", mode: str = "safe") -> dict[str
 
             def advanced_diagnostics():
                 adv = page.locator("#advancedSettings")
-                if not adv.get_attribute("open"):
+                # The boolean HTML `open` attribute is commonly returned as an empty
+                # string when present, so get_attribute("open") is not a safe truth test.
+                if not bool(adv.evaluate("el => el.open")):
                     page.locator("#advancedSettings > summary").click()
-                refresh_services = page.locator("#refreshServices")
-                refresh_services.wait_for(state="attached", timeout=5000)
-
-                if not refresh_services.is_visible():
-                    parent_details = refresh_services.locator("xpath=ancestor::details[1]")
-
-                    if parent_details.count() > 0:
-                        summary = parent_details.locator("summary").first
-
-                        if summary.is_visible():
-                            summary.click()
-
-                refresh_services.wait_for(state="visible", timeout=10000)
-                refresh_services.click()
-
-                try:
-                    page.wait_for_function(
-                        "() => { const el = document.querySelector('#services'); return !!(el && el.textContent && el.textContent.trim().length > 0); }",
-                        timeout=10000,
-                    )
-                except Exception as exc:
-                    raise AssertionError(
-                        "services diagnostics did not render within 10 seconds"
-                    ) from exc
+                page.locator("#refreshServices").wait_for(state="visible", timeout=5000)
+                page.locator("#refreshServices").click()
                 page.locator("#refreshEvents").click()
                 page.wait_for_timeout(600)
                 if not page.locator("#services").inner_text().strip():

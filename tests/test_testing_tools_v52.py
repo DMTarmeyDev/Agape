@@ -6,7 +6,7 @@ def test_testing_tool_catalog_contract():
     assert out["ok"] is True
     ids={x["id"] for x in out["tools"]}
     assert {"axe","schemathesis","zap","lighthouse","k6","appium-windows","appium-android"} <= ids
-    assert set(out["recommended_ids"]) == {"axe","schemathesis","zap","lighthouse"}
+    assert set(out["recommended_ids"]) == {"axe","schemathesis","lighthouse"}
 
 
 def test_testing_tool_descriptions_are_human_readable():

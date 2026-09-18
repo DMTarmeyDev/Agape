@@ -1,7 +1,7 @@
 # Agape Mainframe V3.0 — Human First
 
-**Build:** `AGAPE-MAINFRAME-V4.8-CODING-TOOLS`  
-**Version:** `4.8.0`  
+**Build:** `AGAPE-MAINFRAME-V4.8-CODING-TOOLS`
+**Version:** `4.8.0`
 **Main UI:** `http://127.0.0.1:8850/`
 
 Agape V3.0 is a human-first consolidation of the Mainframe, Unified workflow bridge and Document Studio. The normal path is deliberately limited to three steps and stops carrying irrelevant branches after the user makes a choice.

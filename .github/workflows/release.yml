@@ -1,9 +1,12 @@
 name: Build release
+
 on:
   push:
     tags: ['v*']
+
 permissions:
   contents: write
+
 jobs:
   qa:
     runs-on: ubuntu-latest
@@ -18,10 +21,15 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Public release audit
         run: python scripts/public_audit.py
-      - name: Regression tests
+      - name: README and release-link contract audit
+        run: python scripts/check_repository_links.py
+      - name: Main regression tests
         env:
           AGAPE_MAINFRAME_DATA: ${{ runner.temp }}/agape-test-data
           AGAPE_SECURITY_ROOT: ${{ runner.temp }}/agape-test-security
+        run: python -m pytest -q tests
+      - name: Workflow Bridge regression tests
+        working-directory: recovered/unified-r24
         run: python -m pytest -q tests
       - name: Full dummy-data user-flow QA
         env:
@@ -36,6 +44,7 @@ jobs:
           path: |
             ${{ runner.temp }}/agape-full-qa/FULL-QA-REPORT.json
             ${{ runner.temp }}/agape-full-qa/full-qa-final.png
+
   build:
     needs: qa
     strategy:
@@ -118,8 +127,73 @@ jobs:
         with:
           name: ${{ matrix.artifact }}
           path: release/*
+          if-no-files-found: error
+
+  android:
+    needs: qa
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+      - name: Install Android 36 SDK
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.1.0'
+      - name: Set up Gradle 9.6
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.6.0'
+      - name: Build installable Android APK
+        env:
+          AGAPE_BASE_URL: https://agape-alpha.tail2a2d28.ts.net/
+        run: gradle --no-daemon -p android-app :app:assembleDebug -PagapeBaseUrl="$AGAPE_BASE_URL"
+      - name: Stage Android APK
+        run: |
+          mkdir -p release
+          unzip -l android-app/app/build/outputs/apk/debug/app-debug.apk | grep -q 'classes.dex'
+          cp android-app/app/build/outputs/apk/debug/app-debug.apk release/Agape-Android-debug.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: release/*
+          if-no-files-found: error
+
+  ios:
+    needs: qa
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build iOS Simulator app
+        env:
+          AGAPE_BASE_URL: https://agape-alpha.tail2a2d28.ts.net/
+        run: |
+          xcodebuild -project ios-app/AgapeMobile.xcodeproj -scheme AgapeMobile -list
+          xcodebuild \
+            -project ios-app/AgapeMobile.xcodeproj \
+            -scheme AgapeMobile \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath ios-derived \
+            CODE_SIGNING_ALLOWED=NO \
+            AGAPE_BASE_URL="$AGAPE_BASE_URL" \
+            build
+          APP="$(find ios-derived/Build/Products/Release-iphonesimulator -maxdepth 1 -type d -name 'Agape.app' -print -quit)"
+          test -n "$APP"
+          mkdir -p release
+          ditto -c -k --sequesterRsrc --keepParent "$APP" release/Agape-iOS-Simulator.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios
+          path: release/*
+          if-no-files-found: error
+
   publish:
-    needs: build
+    needs: [build, android, ios]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4

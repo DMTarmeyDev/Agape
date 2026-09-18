@@ -37,7 +37,12 @@ def test_projects_take_status_from_same_refreshed_history():
         assert rows[0]['latest_job_id']=='J-DONE'
 
 def test_new_jobs_store_project_identity_for_cross_page_status():
-    assert '"project_id":project_id,"intake_id":intake_id' in BRIDGE
+    # R2.4.6 separates runtime project identity from source/provenance identity.
+    # Prepared document/research jobs execute projectless so a recovered/missing
+    # Core project cannot kill an otherwise self-contained intake.
+    assert '"project_id":execution_project_id' in BRIDGE
+    assert '"source_project_id":project_id' in BRIDGE
+    assert '"intake_id":intake_id' in BRIDGE
 
 def test_every_status_view_uses_human_canonical_labels():
     assert 'function canonicalStatusLabel(value)' in JS
