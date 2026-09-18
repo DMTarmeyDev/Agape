@@ -3,152 +3,236 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Agape is an open-source AI project development workspace focused on human-first workflows, model routing, safe automation, testing, checkpoints and rollback." />
-  <meta name="theme-color" content="#0a0d12" />
-  <title>Agape — Premium human-first AI project development</title>
+  <meta name="description" content="Agape is a human-first AI project workspace for research, creation, model routing, validation, checkpoints and safe automation." />
+  <meta name="theme-color" content="#090704" />
+  <meta name="color-scheme" content="dark" />
+  <meta property="og:title" content="Agape — The gold standard for human-led AI work" />
+  <meta property="og:description" content="One human-first workspace for briefs, research, model routing, creation, validation and recovery." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://github.com/DMTarmeyDev/Agape" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23090704'/%3E%3Ccircle cx='32' cy='32' r='23' fill='none' stroke='%23D8B35D' stroke-width='2'/%3E%3Cpath d='M32 13 49 49h-7.4l-3.7-8.3H26L22.3 49H15L32 13Zm0 13.1-3.8 8.7h7.6L32 26.1Z' fill='%23F4DE99'/%3E%3C/svg%3E" />
+  <title>Agape — The gold standard for human-led AI work</title>
   <style>
     :root{
-      --bg:#090806;--bg2:#12100b;--panel:rgba(28,23,13,.76);--panel2:#1b160c;
-      --text:#fff9e8;--muted:#c6b98f;--line:rgba(233,194,93,.18);
-      --accent:#e9c25d;--accent2:#fff0a8;--warn:#d9a62e;--max:1160px;
-      --shadow:0 30px 80px rgba(0,0,0,.35)
+      --ink:#080704;
+      --ink-2:#0e0b06;
+      --ink-3:#151006;
+      --panel:#11100c;
+      --ivory:#fff7df;
+      --cream:#efe7d3;
+      --muted:#a99f8b;
+      --dim:#766f62;
+      --gold-0:#fff4c9;
+      --gold-1:#f5dda0;
+      --gold-2:#deb95e;
+      --gold-3:#b9822d;
+      --gold-4:#6f4516;
+      --line:rgba(245,221,160,.14);
+      --line-2:rgba(245,221,160,.28);
+      --line-3:rgba(245,221,160,.48);
+      --glow:rgba(222,185,94,.15);
+      --success:#9bdfad;
+      --max:1240px;
+      --r:24px;
+      --serif:Georgia,"Times New Roman",serif;
+      --sans:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     }
-    *{box-sizing:border-box} html{scroll-behavior:smooth}
-    body{margin:0;background:radial-gradient(circle at 12% 0%,rgba(233,194,93,.16),transparent 30%),radial-gradient(circle at 90% 12%,rgba(255,240,168,.08),transparent 32%),linear-gradient(180deg,#090806 0%,#100d08 48%,#090806 100%);color:var(--text);font:16px/1.6 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    a{color:inherit;text-decoration:none} button{font:inherit}
-    .wrap{width:min(calc(100% - 40px),var(--max));margin:auto}
-    .nav{position:sticky;top:0;z-index:20;background:rgba(9,8,6,.78);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
-    .navin{height:72px;display:flex;align-items:center;justify-content:space-between;gap:24px}
-    .brand{display:flex;align-items:center;gap:12px;font-weight:760;letter-spacing:-.02em}
-    .mark{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,#fff1a6,#c38b20);box-shadow:0 0 40px rgba(233,194,93,.28);position:relative}
-    .mark:after{content:"A";position:absolute;inset:0;display:grid;place-items:center;color:#171005;font-weight:900}
-    .links{display:flex;gap:24px;color:var(--muted);font-size:14px}.links a:hover{color:var(--text)}
-    .navcta,.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border-radius:13px;border:1px solid var(--line);padding:11px 16px;font-weight:700;transition:.2s ease}
-    .navcta{background:linear-gradient(135deg,#fff1a6,#d4a43b);color:#151005;border-color:#f0cd6c}.navcta:hover,.btn.primary:hover{transform:translateY(-1px);box-shadow:0 10px 30px rgba(255,255,255,.12)}
-    .hero{padding:105px 0 70px;position:relative;overflow:hidden}.hero:before{content:"";position:absolute;inset:-20% -10% auto 45%;height:420px;background:radial-gradient(circle,rgba(233,194,93,.16),transparent 62%);filter:blur(8px);pointer-events:none}
-    .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
-    .eyebrow{display:inline-flex;align-items:center;gap:10px;color:#f7e8b3;font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--line);background:rgba(255,255,255,.035);padding:8px 11px;border-radius:999px}
-    .dot{width:7px;height:7px;background:var(--accent);border-radius:50%;box-shadow:0 0 12px var(--accent)}
-    h1{font-family:Georgia,"Times New Roman",serif;font-weight:600;font-size:clamp(52px,7.3vw,90px);line-height:.96;letter-spacing:-.065em;margin:25px 0 26px;max-width:780px}
-    .grad{background:linear-gradient(90deg,#fffdf4 0%,#f7dfa0 38%,#c8922f 88%);-webkit-background-clip:text;background-clip:text;color:transparent}
-    .lead{font-size:clamp(18px,2vw,22px);color:var(--muted);max-width:700px;margin:0 0 31px}
-    .actions{display:flex;flex-wrap:wrap;gap:12px}.btn{background:rgba(255,255,255,.04)}.btn:hover{background:rgba(255,255,255,.075)}.btn.primary{background:linear-gradient(135deg,#fff0a8,#c78d22);color:#171005;border:0;padding:12px 18px}
-    .micro{display:flex;flex-wrap:wrap;gap:14px 24px;margin-top:27px;color:#8390a2;font-size:13px}.micro span:before{content:"✓";color:var(--accent);margin-right:7px}
-    .app{border:1px solid rgba(255,255,255,.13);background:linear-gradient(180deg,rgba(28,23,13,.96),rgba(10,9,6,.98));border-radius:24px;box-shadow:var(--shadow);overflow:hidden;transform:perspective(1100px) rotateY(-4deg) rotateX(2deg)}
-    .appbar{height:48px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 16px;gap:7px}.lamp{width:9px;height:9px;border-radius:50%;background:#344052}.lamp:first-child{background:#ff7f78}.lamp:nth-child(2){background:#ffd66b}.lamp:nth-child(3){background:#67d79d}.apptitle{margin:auto;color:#6f7b8c;font-size:12px;padding-right:46px}
-    .appbody{display:grid;grid-template-columns:126px 1fr;min-height:440px}.side{border-right:1px solid var(--line);padding:18px 11px;background:rgba(255,255,255,.012)}
-    .side .mini{height:34px;border-radius:9px;margin-bottom:8px;color:#8894a5;font-size:11px;display:flex;align-items:center;padding:0 10px}.side .mini.on{background:rgba(233,194,93,.12);color:#fff5cc;border:1px solid rgba(233,194,93,.22)}
-    .stage{padding:26px}.stage h3{margin:0 0 5px;font-size:21px}.stage p{margin:0 0 20px;color:#7d899b;font-size:13px}
-    .task{border:1px solid var(--line);border-radius:15px;background:rgba(255,255,255,.025);padding:16px;margin-bottom:12px}.taskhead{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:750}.status{color:var(--accent);font-size:11px;border:1px solid rgba(233,194,93,.28);background:rgba(233,194,93,.09);border-radius:999px;padding:4px 8px}.bar{height:6px;background:#202631;border-radius:99px;margin-top:12px;overflow:hidden}.bar i{display:block;height:100%;width:78%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px}.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.chip{font-size:11px;color:#95a2b5;border:1px solid var(--line);border-radius:999px;padding:5px 9px}
-    section{padding:88px 0}.section-head{max-width:720px;margin-bottom:38px}.kicker{color:var(--accent);font-size:12px;letter-spacing:.13em;text-transform:uppercase;font-weight:800}.section-head h2{font-family:Georgia,"Times New Roman",serif;font-weight:600;font-size:clamp(34px,4vw,52px);letter-spacing:-.045em;line-height:1.04;margin:10px 0 14px}.section-head p{color:var(--muted);font-size:18px;margin:0}
-    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{border:1px solid var(--line);background:var(--panel);border-radius:19px;padding:24px;min-height:210px;box-shadow:0 10px 30px rgba(0,0,0,.08)}.icon{width:39px;height:39px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(233,194,93,.18),rgba(255,240,168,.08));border:1px solid var(--line);margin-bottom:20px}.card h3{font-size:18px;margin:0 0 8px}.card p{color:var(--muted);font-size:14px;margin:0}
-    .split{display:grid;grid-template-columns:.9fr 1.1fr;gap:46px;align-items:start}.stack{border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.025);padding:10px}.layer{display:flex;gap:16px;padding:18px;border-radius:14px;border-bottom:1px solid var(--line)}.layer:last-child{border-bottom:0}.num{font:700 12px/1 ui-monospace,monospace;color:var(--accent);padding-top:4px}.layer h4{margin:0 0 5px;font-size:15px}.layer p{margin:0;color:var(--muted);font-size:13px}
-    .callout{border:1px solid rgba(233,194,93,.34);background:linear-gradient(135deg,rgba(233,194,93,.10),rgba(255,255,255,.02));border-radius:22px;padding:26px}.callout strong{display:block;font-size:20px;margin-bottom:8px}.callout p{margin:0;color:#c0c8d4}
-    .terminal{margin-top:22px;background:#05070a;border:1px solid var(--line);border-radius:15px;overflow:hidden}.termbar{padding:9px 13px;border-bottom:1px solid var(--line);font-size:11px;color:#717c8c}.code{padding:18px 20px;font:13px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;color:#c8d2df;overflow:auto}.prompt{color:var(--accent)}.copy{float:right;border:0;background:none;color:#7f8b9b;cursor:pointer;font-size:11px}.copy:hover{color:#fff}
-    .cta{padding:78px 0 98px}.ctabox{border:1px solid var(--line);border-radius:28px;padding:52px;background:radial-gradient(circle at 80% 20%,rgba(255,240,168,.12),transparent 32%),radial-gradient(circle at 15% 80%,rgba(233,194,93,.18),transparent 35%),#151108;text-align:center}.ctabox h2{font-family:Georgia,"Times New Roman",serif;font-weight:600;font-size:clamp(38px,5vw,64px);line-height:1;letter-spacing:-.055em;margin:0 0 17px}.ctabox p{color:var(--muted);font-size:18px;max-width:650px;margin:0 auto 26px}
-    footer{border-top:1px solid var(--line);padding:30px 0 44px;color:#758092;font-size:13px}.foot{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}.foot a:hover{color:#fff}
-    .reveal{opacity:0;transform:translateY(14px);transition:.55s ease}.reveal.in{opacity:1;transform:none}
-    @media (max-width:900px){.links{display:none}.hero{padding-top:76px}.hero-grid,.split{grid-template-columns:1fr}.app{transform:none;max-width:650px}.grid3{grid-template-columns:1fr 1fr}.appbody{min-height:390px}.ctabox{padding:42px 24px}}
-    @media (max-width:620px){.wrap{width:min(calc(100% - 26px),var(--max))}.navin{height:64px}.navcta{font-size:13px;padding:9px 12px}h1{font-size:52px}.hero{padding:58px 0 45px}.grid3{grid-template-columns:1fr}.appbody{grid-template-columns:92px 1fr}.stage{padding:18px}.side{padding:12px 8px}.side .mini{padding:0 7px;font-size:9px}.section-head p,.lead{font-size:17px}section{padding:66px 0}.ctabox h2{font-family:Georgia,"Times New Roman",serif;font-weight:600;font-size:42px}}
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth;background:var(--ink)}
+    body{margin:0;background:var(--ink);color:var(--cream);font-family:var(--sans);font-size:16px;line-height:1.6;overflow-x:hidden}
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-4;background:
+      radial-gradient(900px 620px at 50% -160px,rgba(222,185,94,.17),transparent 68%),
+      radial-gradient(700px 520px at -10% 44%,rgba(185,130,45,.08),transparent 70%),
+      radial-gradient(800px 600px at 110% 72%,rgba(245,221,160,.05),transparent 74%),
+      linear-gradient(180deg,#0b0804 0%,#080704 54%,#090704 100%)}
+    body:after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-3;opacity:.22;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.055'/%3E%3C/svg%3E")}
+    a{color:inherit;text-decoration:none}.shell{width:min(calc(100% - 40px),var(--max));margin:auto}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    ::selection{background:rgba(222,185,94,.28);color:#fff}
+
+    /* hallmark navigation */
+    .nav{position:fixed;z-index:100;inset:16px 0 auto;pointer-events:none}
+    .nav-inner{height:64px;display:flex;align-items:center;gap:22px;padding:0 11px 0 14px;background:rgba(9,7,4,.78);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(22px) saturate(125%);box-shadow:0 18px 55px rgba(0,0,0,.34);pointer-events:auto}
+    .brand{display:flex;align-items:center;gap:11px;font-weight:850;letter-spacing:-.035em;white-space:nowrap}.brand-mark{width:39px;height:39px;display:grid;place-items:center;position:relative}.brand-mark:before,.brand-mark:after{content:"";position:absolute;border-radius:50%;inset:2px;border:1px solid rgba(245,221,160,.36)}.brand-mark:after{inset:7px;border-color:rgba(222,185,94,.2)}.brand-mark svg{width:22px;position:relative;z-index:2;filter:drop-shadow(0 0 10px rgba(222,185,94,.22))}.brand span{font-size:17px}.brand small{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-2);font-weight:800;display:block;margin-top:-2px}
+    .navlinks{display:flex;gap:3px;margin-left:auto}.navlinks a{padding:9px 10px;color:#b9b09d;font-size:13px;border-radius:9px;transition:.2s}.navlinks a:hover{background:rgba(255,255,255,.035);color:var(--ivory)}
+    .nav-actions{display:flex;gap:8px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:47px;padding:0 18px;border:1px solid var(--line-2);border-radius:12px;background:rgba(255,255,255,.022);font-weight:790;font-size:14px;letter-spacing:-.01em;transition:.22s ease}.btn:hover{transform:translateY(-2px);border-color:var(--line-3);background:rgba(255,255,255,.04)}.btn.gold{border:0;color:#1a1005;background:linear-gradient(118deg,var(--gold-0) 0%,var(--gold-1) 23%,var(--gold-2) 56%,#c58c30 77%,var(--gold-1) 100%);box-shadow:0 12px 30px rgba(185,130,45,.16),inset 0 1px 0 rgba(255,255,255,.75)}.btn.gold:hover{box-shadow:0 17px 42px rgba(185,130,45,.24),inset 0 1px 0 rgba(255,255,255,.8)}.btn svg{width:16px;height:16px}
+    .menu{display:none;width:42px;height:42px;border:1px solid var(--line);border-radius:11px;background:transparent;color:var(--cream);align-items:center;justify-content:center}
+
+    /* reusable gold language */
+    .gold-text{color:transparent;background:linear-gradient(103deg,#fff7d4 2%,#f4da93 34%,#d9ad4d 58%,#f7e4ab 79%,#a86c22 112%);background-clip:text;-webkit-background-clip:text}
+    .eyebrow{display:inline-flex;align-items:center;gap:9px;padding:7px 12px;border:1px solid var(--line-2);border-radius:999px;background:rgba(222,185,94,.055);font-size:11px;font-weight:820;letter-spacing:.13em;text-transform:uppercase;color:#dacdab}.eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--gold-2);box-shadow:0 0 14px rgba(222,185,94,.8)}
+    .section-tag{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold-2);font-weight:850;margin-bottom:14px}.section-title{font-family:var(--serif);font-size:clamp(39px,5vw,68px);line-height:.98;letter-spacing:-.055em;font-weight:500;margin:0;max-width:900px}.section-copy{max-width:690px;color:#b5ac99;font-size:18px;line-height:1.62;margin:24px 0 0}.section-head{margin-bottom:48px}
+    .hallmark{display:inline-flex;align-items:center;gap:12px;color:#aa9c80;font-size:11px;letter-spacing:.12em;text-transform:uppercase}.hallmark:before,.hallmark:after{content:"";width:48px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-3))}.hallmark:after{background:linear-gradient(90deg,var(--gold-3),transparent)}
+
+    /* hero */
+    .hero{min-height:100vh;display:grid;align-items:center;padding:130px 0 80px;position:relative;isolation:isolate}
+    .hero:after{content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(94%,1380px);height:1px;background:linear-gradient(90deg,transparent,var(--line-2),transparent)}
+    .hero-grid{display:grid;grid-template-columns:minmax(0,1.04fr) minmax(430px,.96fr);gap:58px;align-items:center}
+    .hero h1{font-family:var(--serif);font-size:clamp(58px,7.2vw,104px);font-weight:500;letter-spacing:-.072em;line-height:.89;margin:25px 0 28px;max-width:830px}.hero p{max-width:690px;color:#b7ad99;font-size:clamp(18px,2vw,21px);line-height:1.6;margin:0 0 30px}.hero-actions{display:flex;gap:10px;flex-wrap:wrap}.trust{display:flex;gap:12px 22px;flex-wrap:wrap;margin-top:27px}.trust span{font-size:12px;color:#7f786a;display:flex;align-items:center;gap:7px}.trust b{width:6px;height:6px;background:var(--gold-2);border-radius:50%;box-shadow:0 0 11px rgba(222,185,94,.45)}
+
+    /* gold seal / motif */
+    .seal-stage{min-height:590px;position:relative;display:grid;place-items:center}.seal-stage:before{content:"";position:absolute;width:550px;height:550px;border-radius:50%;background:radial-gradient(circle,rgba(222,185,94,.105),rgba(185,130,45,.02) 48%,transparent 70%);filter:blur(4px)}
+    .orbit{position:absolute;border-radius:50%;border:1px solid rgba(245,221,160,.11);animation:spin 36s linear infinite}.orbit.a{width:520px;height:520px}.orbit.b{width:430px;height:430px;animation-direction:reverse;animation-duration:28s;border-style:dashed}.orbit.c{width:328px;height:328px;animation-duration:21s}.orbit:after{content:"";position:absolute;width:9px;height:9px;border-radius:50%;background:var(--gold-2);top:50%;left:-5px;box-shadow:0 0 18px rgba(222,185,94,.7)}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .seal{width:294px;height:294px;border-radius:50%;position:relative;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,rgba(255,244,201,.11),transparent 28%),linear-gradient(145deg,#171107,#090704 68%);border:1px solid rgba(245,221,160,.39);box-shadow:0 44px 110px rgba(0,0,0,.55),inset 0 0 0 8px rgba(222,185,94,.025),inset 0 0 0 9px rgba(245,221,160,.11),0 0 90px rgba(222,185,94,.08)}
+    .seal:before{content:"";position:absolute;inset:25px;border-radius:50%;border:1px solid rgba(245,221,160,.22)}.seal:after{content:"";position:absolute;inset:41px;border-radius:50%;border:1px dashed rgba(222,185,94,.19)}
+    .seal-copy{position:relative;z-index:3;text-align:center}.seal-a{font-family:var(--serif);font-size:84px;line-height:.8;font-weight:500;letter-spacing:-.07em}.seal-copy strong{display:block;margin-top:14px;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold-1)}.seal-copy small{display:block;margin-top:5px;color:#746a58;font-size:9px;letter-spacing:.16em;text-transform:uppercase}
+    .seal-word{position:absolute;inset:0;z-index:2;animation:spin 50s linear infinite}.seal-word svg{width:100%;height:100%}.seal-word text{fill:#9f8a61;font-size:10px;letter-spacing:4.4px;font-family:Arial,sans-serif}
+    .stamp{position:absolute;padding:8px 11px;border:1px solid var(--line-2);border-radius:9px;background:#0d0a05;color:#9d927f;font-size:9px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;box-shadow:0 12px 30px rgba(0,0,0,.3)}.stamp.s1{top:70px;right:10px}.stamp.s2{bottom:58px;left:2px}.stamp em{color:var(--gold-2);font-style:normal}
+
+    /* ticker */
+    .ticker{overflow:hidden;border-bottom:1px solid var(--line);background:rgba(255,255,255,.008)}.ticker-track{display:flex;width:max-content;animation:ticker 30s linear infinite;padding:14px 0}.ticker-item{display:flex;align-items:center;gap:10px;margin-right:40px;color:#8b8374;font-size:11px;text-transform:uppercase;letter-spacing:.115em;font-weight:760}.ticker-item i{width:6px;height:6px;transform:rotate(45deg);background:var(--gold-3)}@keyframes ticker{to{transform:translateX(-50%)}}
+
+    section{padding:108px 0;position:relative}.gold-rule{height:1px;background:linear-gradient(90deg,transparent,var(--line-2),transparent)}
+
+    /* gold standard cards */
+    .standards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.standard{min-height:270px;padding:26px;border:1px solid var(--line);border-radius:21px;background:linear-gradient(160deg,rgba(255,255,255,.025),rgba(222,185,94,.018));position:relative;overflow:hidden}.standard:before{content:"";position:absolute;left:0;top:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--gold-2),transparent);opacity:.7}.standard-num{font-family:var(--serif);font-size:56px;line-height:1;color:rgba(222,185,94,.18);letter-spacing:-.05em}.standard h3{font-size:20px;letter-spacing:-.03em;margin:30px 0 8px}.standard p{font-size:14px;color:#9e9584;margin:0}.standard small{position:absolute;bottom:22px;font-size:9px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold-3)}
+
+    /* product showcase */
+    .product-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:16px}.panel{border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(180deg,rgba(20,16,8,.96),rgba(10,8,5,.94));box-shadow:0 28px 75px rgba(0,0,0,.3);overflow:hidden;position:relative}.panel:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(125deg,transparent 0 40%,rgba(245,221,160,.025) 52%,transparent 65%)}
+    .panel-copy{padding:34px;position:relative;z-index:2}.card-tag{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--gold-2);font-weight:820}.panel h3{font-family:var(--serif);font-size:34px;line-height:1.04;letter-spacing:-.045em;font-weight:500;margin:13px 0 12px}.panel p{color:#a59c8a;margin:0;max-width:620px}
+    .mock{margin:0 22px 22px;border:1px solid var(--line-2);border-radius:18px;background:#0b0906;box-shadow:0 24px 70px rgba(0,0,0,.45);overflow:hidden}.mock-head{height:46px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 14px;gap:6px}.mock-head i{width:7px;height:7px;border-radius:50%;background:#4d4638}.mock-head span{margin:auto;color:#625b4f;font-size:9px;letter-spacing:.15em;text-transform:uppercase}.mock-body{display:grid;grid-template-columns:115px 1fr;min-height:330px}.mock-side{padding:14px 10px;border-right:1px solid var(--line)}.mock-side b{font-size:9px;display:block;padding:8px;color:#655e51;text-transform:uppercase;letter-spacing:.12em}.mock-side span{display:block;padding:8px;border-radius:8px;color:#6f6759;font-size:9px;margin:3px 0}.mock-side span.on{color:#f0d98e;background:rgba(222,185,94,.07);border:1px solid rgba(222,185,94,.12)}.mock-main{padding:20px}.mock-main h4{margin:0;font-size:15px}.mock-main small{color:#625b50}.brief{margin-top:14px;border:1px solid var(--line);padding:12px;border-radius:11px;background:rgba(255,255,255,.014)}.brief b{font-size:9px;text-transform:uppercase;letter-spacing:.11em;color:#7f7565}.brief p{font-size:11px;color:#c7beae;margin:5px 0 0}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}.step{padding:9px;border:1px solid var(--line);border-radius:9px;font-size:9px;color:#7d7568}.step.done{color:#cbb46d;border-color:rgba(222,185,94,.2)}.step strong{display:block;color:#ddd1bb;font-size:10px;margin-top:2px}.progress{height:5px;background:#1b1710;border-radius:10px;overflow:hidden;margin-top:15px}.progress i{display:block;width:83%;height:100%;background:linear-gradient(90deg,var(--gold-4),var(--gold-2),var(--gold-0))}
+    .stack{display:grid;gap:16px}.mini{padding:30px}.mini h3{font-size:28px}.route{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-top:25px}.route-col{display:grid;gap:7px}.route-box{padding:11px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.014);font-size:11px;color:#bab09d}.route-box em{display:block;color:#71695c;font-size:8px;text-transform:uppercase;letter-spacing:.12em;font-style:normal}.arrow{color:var(--gold-2);font-size:20px}.checks{display:grid;gap:9px;margin-top:22px}.check{display:flex;gap:10px;align-items:flex-start;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.012)}.check i{font-style:normal;color:var(--success);font-size:13px}.check strong{font-size:12px;display:block}.check span{display:block;color:#776f61;font-size:10px;margin-top:2px}
+
+    /* workflow */
+    .workflow-grid{display:grid;grid-template-columns:.78fr 1.22fr;gap:75px;align-items:start}.workflow-list{display:grid;gap:10px}.work{display:grid;grid-template-columns:72px 1fr;gap:18px;padding:22px 24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.012);transition:.2s}.work:hover{transform:translateX(5px);border-color:var(--line-2);background:rgba(222,185,94,.026)}.work-num{font-family:var(--serif);font-size:34px;color:#60451b}.work h3{margin:2px 0 5px;font-size:18px}.work p{margin:0;color:#908777;font-size:13px}.work small{display:block;color:var(--gold-3);text-transform:uppercase;letter-spacing:.1em;font-size:8px;margin-top:8px}
+
+    /* proof/status */
+    .proof{display:grid;grid-template-columns:1fr 1fr;gap:16px}.proof-card{padding:34px;border:1px solid var(--line);border-radius:var(--r);background:rgba(255,255,255,.012)}.proof-card h3{font-family:var(--serif);font-size:34px;line-height:1.05;letter-spacing:-.04em;font-weight:500;margin:14px 0 10px}.proof-card p{color:#9e9583;margin:0}.proof-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:24px}.proof-item{padding:13px;border:1px solid var(--line);border-radius:10px}.proof-item b{display:block;color:#d9ceb8;font-size:12px}.proof-item span{display:block;color:#6f685d;font-size:10px;margin-top:3px}.status-pill{display:inline-flex;align-items:center;gap:7px;color:#d8cba9;font-size:10px;font-weight:820;letter-spacing:.13em;text-transform:uppercase}.status-pill i{width:7px;height:7px;background:var(--gold-2);border-radius:50%;box-shadow:0 0 13px rgba(222,185,94,.7)}.note{margin-top:22px;padding:14px 15px;border:1px solid rgba(222,185,94,.15);border-radius:11px;background:rgba(222,185,94,.03);color:#8e8575;font-size:11px}
+
+    /* final CTA */
+    .cta{padding:115px 0 130px}.cta-box{position:relative;overflow:hidden;text-align:center;padding:78px 28px;border:1px solid var(--line-2);border-radius:34px;background:radial-gradient(circle at 50% 0,rgba(222,185,94,.12),transparent 42%),linear-gradient(180deg,#121008,#0b0905);box-shadow:0 40px 110px rgba(0,0,0,.35)}.cta-box:before{content:"";position:absolute;width:720px;height:720px;border:1px solid rgba(222,185,94,.07);border-radius:50%;left:50%;top:-510px;transform:translateX(-50%);box-shadow:0 0 0 90px rgba(222,185,94,.015),0 0 0 180px rgba(222,185,94,.01)}.cta-box>*{position:relative;z-index:2}.cta h2{font-family:var(--serif);font-size:clamp(48px,6vw,82px);line-height:.96;letter-spacing:-.06em;font-weight:500;max-width:880px;margin:18px auto 20px}.cta p{max-width:650px;margin:0 auto 28px;color:#a89f8d;font-size:17px}.cta-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+
+    footer{border-top:1px solid var(--line);padding:28px 0 42px;color:#716a5e;font-size:11px}.footer-grid{display:flex;align-items:center;justify-content:space-between;gap:20px}.footer-links{display:flex;gap:18px}.footer-links a:hover{color:var(--gold-2)}
+
+    .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}.reveal.on{opacity:1;transform:none}
+    @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+
+    @media(max-width:980px){
+      .navlinks{display:none}.menu{display:flex;margin-left:auto}.nav-actions .btn:not(.gold){display:none}.nav-actions{margin-left:0}
+      .hero-grid,.product-grid,.workflow-grid,.proof{grid-template-columns:1fr}.hero{padding-top:125px}.hero-grid{gap:20px}.seal-stage{min-height:510px;order:-1}.hero-copy-wrap{order:2}.seal-stage{order:1}.standards{grid-template-columns:1fr 1fr}.workflow-grid{gap:42px}.product-grid{gap:14px}
+    }
+    @media(max-width:650px){
+      .shell{width:min(calc(100% - 24px),var(--max))}.nav{top:9px}.nav-inner{height:58px}.brand small{display:none}.nav-actions .gold{display:none}.hero{padding:95px 0 60px}.hero h1{font-size:clamp(49px,16vw,72px)}.hero p{font-size:17px}.seal-stage{min-height:430px;transform:scale(.78);margin:-35px -55px}.standards,.proof-list{grid-template-columns:1fr}.standard{min-height:220px}.product-grid{display:block}.stack{margin-top:14px}.mock-body{grid-template-columns:90px 1fr}.steps{grid-template-columns:1fr}.work{grid-template-columns:50px 1fr;padding:18px}.work-num{font-size:27px}.cta-box{padding:58px 18px}.footer-grid{display:grid}.footer-links{flex-wrap:wrap}
+    }
   </style>
 </head>
 <body>
-  <nav class="nav">
-    <div class="wrap navin">
-      <a class="brand" href="#top" aria-label="Agape home"><span class="mark"></span><span>Agape</span></a>
-      <div class="links"><a href="#features">Features</a><a href="#architecture">Architecture</a><a href="#status">Status</a><a href="#start">Get started</a></div>
-      <a class="navcta" href="https://github.com/DMTarmeyDev/Agape" target="_blank" rel="noopener">View on GitHub ↗</a>
+  <nav class="nav" aria-label="Primary navigation">
+    <div class="shell nav-inner">
+      <a class="brand" href="#top" aria-label="Agape home">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M32 10 51 52h-8.4l-4.1-9.4H25.4L21.2 52h-8.3L32 10Zm0 15.5-4.3 10h8.6L32 25.5Z" fill="url(#g)"/><defs><linearGradient id="g" x1="10" x2="55" y1="8" y2="54"><stop stop-color="#FFF4C9"/><stop offset=".47" stop-color="#DEB95E"/><stop offset="1" stop-color="#A96E20"/></linearGradient></defs></svg></span>
+        <span>Agape<small>Gold standard AI workspace</small></span>
+      </a>
+      <div class="navlinks"><a href="#gold-standard">Gold standard</a><a href="#product">Product</a><a href="#workflow">Workflow</a><a href="#proof">Proof</a></div>
+      <div class="nav-actions"><a class="btn" href="https://github.com/DMTarmeyDev/Agape" target="_blank" rel="noopener">Repository</a><a class="btn gold" href="https://github.com/DMTarmeyDev/Agape" target="_blank" rel="noopener">Explore Agape</a></div>
+      <button class="menu" id="menu" type="button" aria-label="Open menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     </div>
   </nav>
 
   <main id="top">
     <header class="hero">
-      <div class="wrap hero-grid">
-        <div>
-          <div class="eyebrow"><span class="dot"></span> Open source · Early alpha · Gold edition</div>
-          <h1><span class="grad">Build with AI.</span><br>Keep humans in control.</h1>
-          <p class="lead">Agape is a human-first AI project development workspace for turning ideas into working outputs with model routing, safe automation, testing, checkpoints and rollback built into the workflow.</p>
-          <div class="actions">
-            <a class="btn primary" href="https://github.com/DMTarmeyDev/Agape" target="_blank" rel="noopener">Explore the repository ↗</a>
-            <a class="btn" href="#start">Run locally</a>
+      <div class="shell hero-grid">
+        <div class="hero-copy-wrap reveal">
+          <div class="eyebrow"><i></i> Human-led · AI-powered · Gold standard by design</div>
+          <h1>Make ambitious work feel <span class="gold-text">golden.</span></h1>
+          <p>Agape turns a brief into researched, created and checked project work—routing models and tools behind the scenes while keeping the human in control.</p>
+          <div class="hero-actions">
+            <a class="btn gold" href="#product">See the workspace <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a>
+            <a class="btn" href="https://github.com/DMTarmeyDev/Agape" target="_blank" rel="noopener">View on GitHub</a>
           </div>
-          <div class="micro"><span>Human-first interface</span><span>Multi-model routing</span><span>Local-first development</span></div>
+          <div class="trust"><span><b></b>Human-first interface</span><span><b></b>Local + online AI</span><span><b></b>Validation gates</span><span><b></b>Checkpoints + recovery</span></div>
         </div>
 
-        <div class="app" aria-label="Illustrative Agape interface">
-          <div class="appbar"><i class="lamp"></i><i class="lamp"></i><i class="lamp"></i><span class="apptitle">AGAPE · PROJECT WORKSPACE</span></div>
-          <div class="appbody">
-            <aside class="side"><div class="mini on">Create</div><div class="mini">Projects</div><div class="mini">Ask Agape</div><div class="mini">Recent</div><div class="mini">Settings</div></aside>
-            <div class="stage">
-              <h3>Build a project</h3><p>Describe the outcome. Agape coordinates the work behind the scenes.</p>
-              <div class="task"><div class="taskhead"><span>Understand the brief</span><span class="status">Complete</span></div><div class="bar"><i style="width:100%"></i></div></div>
-              <div class="task"><div class="taskhead"><span>Research & prepare</span><span class="status">Running</span></div><div class="bar"><i></i></div><div class="chips"><span class="chip">model routing</span><span class="chip">sources</span><span class="chip">validation</span></div></div>
-              <div class="task"><div class="taskhead"><span>Create & verify output</span><span class="status" style="color:#aab4c3;border-color:var(--line);background:rgba(255,255,255,.03)">Queued</span></div><div class="bar"><i style="width:24%;opacity:.35"></i></div></div>
-            </div>
+        <div class="seal-stage reveal" aria-label="Agape gold standard motif">
+          <div class="orbit a"></div><div class="orbit b"></div><div class="orbit c"></div>
+          <div class="stamp s1">Built for <em>clarity</em></div><div class="stamp s2">Human <em>in control</em></div>
+          <div class="seal">
+            <div class="seal-word" aria-hidden="true"><svg viewBox="0 0 300 300"><defs><path id="circle" d="M150,150 m-112,0 a112,112 0 1,1 224,0 a112,112 0 1,1 -224,0"/></defs><text><textPath href="#circle">AGAPE · HUMAN LED · VALIDATED WORK · GOLD STANDARD · </textPath></text></svg></div>
+            <div class="seal-copy"><div class="seal-a gold-text">A</div><strong>Agape</strong><small>Craft · evidence · control</small></div>
           </div>
         </div>
       </div>
     </header>
 
-    <section id="features">
-      <div class="wrap">
-        <div class="section-head reveal"><div class="kicker">What Agape is for</div><h2>One workspace for AI-assisted project work.</h2><p>Agape is designed to reduce the amount of model-juggling, terminal-watching and technical decision-making the user has to do manually.</p></div>
-        <div class="grid3">
-          <article class="card reveal"><div class="icon">✦</div><h3>Automatic model routing</h3><p>Route work to the most appropriate available AI model or provider instead of locking the whole application to a single model.</p></article>
-          <article class="card reveal"><div class="icon">↻</div><h3>Safe automation loops</h3><p>Run iterative project workflows with validation gates, visible progress, checkpoints and a path back when a change fails.</p></article>
-          <article class="card reveal"><div class="icon">✓</div><h3>Test before trust</h3><p>Make testing part of the workflow so generated code and project changes can be checked instead of simply accepted.</p></article>
-          <article class="card reveal"><div class="icon">▤</div><h3>Documents & outputs</h3><p>Develop structured documents and other deliverables from a brief, while keeping supporting work and project context together.</p></article>
-          <article class="card reveal"><div class="icon">⌘</div><h3>Developer power when needed</h3><p>Expose projects, development controls, terminal history, models and diagnostics for advanced users without forcing them onto everyone.</p></article>
-          <article class="card reveal"><div class="icon">◉</div><h3>Local-first control</h3><p>Keep a local application core and project data while still allowing optional online models, research and external connectors.</p></article>
+    <div class="ticker" aria-hidden="true"><div class="ticker-track">
+      <span class="ticker-item"><i></i>Gold standard by design</span><span class="ticker-item"><i></i>Human-first interface</span><span class="ticker-item"><i></i>Automatic model routing</span><span class="ticker-item"><i></i>Public research</span><span class="ticker-item"><i></i>Validation built in</span><span class="ticker-item"><i></i>Checkpoints + rollback</span><span class="ticker-item"><i></i>Local + online AI</span>
+      <span class="ticker-item"><i></i>Gold standard by design</span><span class="ticker-item"><i></i>Human-first interface</span><span class="ticker-item"><i></i>Automatic model routing</span><span class="ticker-item"><i></i>Public research</span><span class="ticker-item"><i></i>Validation built in</span><span class="ticker-item"><i></i>Checkpoints + rollback</span><span class="ticker-item"><i></i>Local + online AI</span>
+    </div></div>
+
+    <section id="gold-standard">
+      <div class="shell">
+        <div class="section-head reveal"><div class="section-tag">The Agape standard</div><h2 class="section-title">Gold is not a colour.<br><span class="gold-text">It is the standard.</span></h2><p class="section-copy">The motif represents how Agape is meant to work: fewer compromises, clear provenance, deliberate craft and a visible quality gate before work becomes final.</p></div>
+        <div class="standards">
+          <article class="standard reveal"><div class="standard-num">01</div><h3>Clear on top.</h3><p>The interface starts with the outcome a person wants, not the machinery underneath.</p><small>Human-first</small></article>
+          <article class="standard reveal"><div class="standard-num">02</div><h3>Capable underneath.</h3><p>Local models, cloud models and specialist tools can be routed to the work they are best suited to.</p><small>Flexible intelligence</small></article>
+          <article class="standard reveal"><div class="standard-num">03</div><h3>Evidence before polish.</h3><p>Research and source material should strengthen the result instead of filling space with confident-looking guesses.</p><small>Grounded work</small></article>
+          <article class="standard reveal"><div class="standard-num">04</div><h3>Checked before final.</h3><p>Tests, validation and recovery belong inside the workflow, not after the user has already trusted the output.</p><small>Quality gate</small></article>
         </div>
       </div>
     </section>
 
-    <section id="architecture">
-      <div class="wrap split">
-        <div class="section-head reveal"><div class="kicker">Architecture</div><h2>Simple on the surface. Structured underneath.</h2><p>The interface is intended to speak in tasks and outcomes. Technical systems become progressively visible only when they are useful.</p></div>
-        <div class="stack reveal">
-          <div class="layer"><div class="num">01</div><div><h4>Human-first UI</h4><p>Create, ask, review progress and open completed work without needing to understand the orchestration engine.</p></div></div>
-          <div class="layer"><div class="num">02</div><div><h4>Project orchestration</h4><p>Break work into stages, track state, close completed sections and keep failed work visible for repair.</p></div></div>
-          <div class="layer"><div class="num">03</div><div><h4>Model & tool routing</h4><p>Select from available local and online models and tools according to the job instead of using a fixed provider.</p></div></div>
-          <div class="layer"><div class="num">04</div><div><h4>Validation, data & recovery</h4><p>Tests, checkpoints, project records and rollback mechanisms provide a safer foundation for automation.</p></div></div>
-        </div>
-      </div>
-    </section>
+    <div class="shell gold-rule"></div>
 
-    <section id="status">
-      <div class="wrap split">
-        <div class="callout reveal"><strong>Early Alpha</strong><p>Agape is under active development. Interfaces, installers and internal modules can change, and some workflows may still be incomplete or experimental. Use test data and keep backups while evaluating it.</p></div>
-        <div class="reveal"><div class="kicker">Current direction</div><h2 style="font-size:38px;letter-spacing:-.04em;line-height:1.08;margin:10px 0 14px">Windows-first today, broader platform support in view.</h2><p style="color:var(--muted);margin:0">The project has a browser-based core and has been developed toward a native Windows desktop experience. The source architecture is also being organized so the same core can support other platforms rather than creating separate products from scratch.</p></div>
-      </div>
-    </section>
-
-    <section id="start">
-      <div class="wrap split">
-        <div class="section-head reveal"><div class="kicker">Get started</div><h2>Clone the project and run the core locally.</h2><p>The exact setup can evolve during alpha development, so check the repository README for the latest prerequisites and installer guidance.</p></div>
-        <div class="reveal">
-          <div class="terminal">
-            <div class="termbar">Windows PowerShell <button class="copy" data-copy="git clone https://github.com/DMTarmeyDev/Agape.git\ncd Agape\\core\npy app.py">COPY</button></div>
-            <div class="code"><span class="prompt">PS&gt;</span> git clone https://github.com/DMTarmeyDev/Agape.git<br><span class="prompt">PS&gt;</span> cd Agape\core<br><span class="prompt">PS&gt;</span> py app.py</div>
+    <section id="product">
+      <div class="shell">
+        <div class="section-head reveal"><div class="section-tag">The product</div><h2 class="section-title">One workspace.<br><span class="gold-text">Many kinds of intelligence.</span></h2><p class="section-copy">Agape is designed around the project, not a single AI vendor. Give it the source, review what it understands, then let it route the work and create the result.</p></div>
+        <div class="product-grid">
+          <article class="panel reveal">
+            <div class="panel-copy"><div class="card-tag">Human-first workspace</div><h3>Brief in. Checked result out.</h3><p>The normal workflow keeps technical decisions out of the way while still making them available when a project genuinely needs deeper control.</p></div>
+            <div class="mock" aria-label="Illustration of Agape workspace">
+              <div class="mock-head"><i></i><i></i><i></i><span>Agape workspace</span></div>
+              <div class="mock-body"><aside class="mock-side"><b>Workspace</b><span class="on">Create</span><span>Projects</span><span>Results</span><span>Settings</span></aside><div class="mock-main"><h4>Create a result</h4><small>Source → Review → Result</small><div class="brief"><b>Prepared brief</b><p>Create a bank-ready expansion business plan using the project facts, public evidence and stated constraints.</p></div><div class="steps"><div class="step done">01<strong>Source ready</strong></div><div class="step done">02<strong>Review complete</strong></div><div class="step">03<strong>Creating result</strong></div></div><div class="progress"><i></i></div></div></div>
+            </div>
+          </article>
+          <div class="stack">
+            <article class="panel mini reveal"><div class="card-tag">Model + tool routing</div><h3>Use capability, not lock-in.</h3><p>Agape can route parts of a project across available local AI, online AI and specialist tools.</p><div class="route"><div class="route-col"><div class="route-box"><em>Input</em>Project brief</div><div class="route-box"><em>Task</em>Research</div><div class="route-box"><em>Task</em>Build</div></div><div class="arrow">→</div><div class="route-col"><div class="route-box"><em>Route</em>Local AI</div><div class="route-box"><em>Route</em>Online AI</div><div class="route-box"><em>Route</em>Tools</div></div></div></article>
+            <article class="panel mini reveal"><div class="card-tag">Validation + recovery</div><h3>Automation with brakes.</h3><p>Important work is easier to trust when the system can expose failure and return to a known-good point.</p><div class="checks"><div class="check"><i>✓</i><div><strong>Validation gates</strong><span>Check important work before final.</span></div></div><div class="check"><i>✓</i><div><strong>Visible failures</strong><span>Problems stay visible instead of being hidden.</span></div></div><div class="check"><i>✓</i><div><strong>Checkpoint + rollback</strong><span>Recover without rebuilding from zero.</span></div></div></div></article>
           </div>
-          <p style="color:#7f8b9b;font-size:13px;margin-top:13px">Security note: keep API keys and other secrets outside version control. Review configuration files before publishing or sharing a fork.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="workflow">
+      <div class="shell workflow-grid">
+        <div class="reveal"><div class="section-tag">How it works</div><h2 class="section-title">A deliberate path from idea to <span class="gold-text">proved output.</span></h2><p class="section-copy">Agape is intended to keep the human focused on judgement while the system handles research, routing, creation and verification.</p><div class="hallmark" style="margin-top:35px">Agape workflow</div></div>
+        <div class="workflow-list">
+          <article class="work reveal"><div class="work-num">01</div><div><h3>Give Agape the source</h3><p>Paste text, upload a document or continue from saved project context.</p><small>Source · constraints · intended result</small></div></article>
+          <article class="work reveal"><div class="work-num">02</div><div><h3>Review what Agape understood</h3><p>Established facts, missing private information and public research opportunities are separated before creation.</p><small>Facts · gaps · research</small></div></article>
+          <article class="work reveal"><div class="work-num">03</div><div><h3>Route the work</h3><p>Agape can choose suitable models and tools for the different parts of the project.</p><small>Local AI · online AI · tools</small></div></article>
+          <article class="work reveal"><div class="work-num">04</div><div><h3>Create and verify</h3><p>The output is produced, checked and surfaced with visible status rather than silently assumed to be correct.</p><small>Create · validate · review</small></div></article>
+          <article class="work reveal"><div class="work-num">05</div><div><h3>Recover when something fails</h3><p>Checkpoints and rollback are intended to preserve progress and make failed experiments recoverable.</p><small>Retry · checkpoint · rollback</small></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="proof">
+      <div class="shell">
+        <div class="section-head reveal"><div class="section-tag">Built to be challenged</div><h2 class="section-title">The shine should come from <span class="gold-text">proof.</span></h2><p class="section-copy">Agape is still early-alpha software. The gold-standard motif is an ambition for how the product should be built—not a claim that unfinished software is flawless.</p></div>
+        <div class="proof">
+          <article class="proof-card reveal"><div class="status-pill"><i></i>Quality philosophy</div><h3>Polish is not enough.</h3><p>A convincing interface matters, but the real standard is whether the workflow can preserve facts, expose failures, verify outputs and recover safely.</p><div class="proof-list"><div class="proof-item"><b>Research</b><span>Strengthen missing public context.</span></div><div class="proof-item"><b>Validation</b><span>Check work before final.</span></div><div class="proof-item"><b>State</b><span>Keep project continuity visible.</span></div><div class="proof-item"><b>Recovery</b><span>Retry without losing everything.</span></div></div></article>
+          <article class="proof-card reveal"><div class="status-pill"><i></i>Early Alpha</div><h3>Open development. Clear expectations.</h3><p>Windows is the current primary focus, with broader macOS and Linux support in the direction of travel. Interfaces and internal systems can still change as reliability improves.</p><div class="note">Use test data while evaluating early-alpha builds, keep backups, and report reproducible issues. The aim is dependable work, not pretending an unfinished build is already perfect.</div></article>
         </div>
       </div>
     </section>
 
     <section class="cta">
-      <div class="wrap">
-        <div class="ctabox reveal"><h2>Help shape Agape.</h2><p>Explore the source, test the alpha, report reproducible issues and contribute improvements to the project.</p><div class="actions" style="justify-content:center"><a class="btn primary" href="https://github.com/DMTarmeyDev/Agape" target="_blank" rel="noopener">Open GitHub repository ↗</a><a class="btn" href="https://github.com/DMTarmeyDev/Agape/issues" target="_blank" rel="noopener">View issues ↗</a></div></div>
-      </div>
+      <div class="shell"><div class="cta-box reveal"><div class="eyebrow"><i></i> Agape</div><h2>Human judgement.<br><span class="gold-text">Gold-standard ambition.</span></h2><p>Explore the code, test the workflow and help shape a workspace designed to make serious AI-assisted project work easier to understand and safer to trust.</p><div class="cta-actions"><a class="btn gold" href="https://github.com/DMTarmeyDev/Agape" target="_blank" rel="noopener">Explore the repository</a><a class="btn" href="https://github.com/DMTarmeyDev/Agape/issues" target="_blank" rel="noopener">Report an issue</a></div></div></div>
     </section>
   </main>
 
-  <footer><div class="wrap foot"><div>Agape · Open-source AI project development</div><div><a href="https://github.com/DMTarmeyDev/Agape" target="_blank" rel="noopener">GitHub</a> · <a href="https://github.com/DMTarmeyDev/Agape/blob/main/SECURITY.md" target="_blank" rel="noopener">Security</a></div></div></footer>
+  <footer><div class="shell footer-grid"><div>Agape · Human-led AI project development</div><div class="footer-links"><a href="#gold-standard">Gold standard</a><a href="#product">Product</a><a href="#workflow">Workflow</a><a href="https://github.com/DMTarmeyDev/Agape" target="_blank" rel="noopener">GitHub</a></div></div></footer>
 
   <script>
-    const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.12});
+    const io=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on')}),{threshold:.08});
     document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
-    document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(b.dataset.copy);const old=b.textContent;b.textContent='COPIED';setTimeout(()=>b.textContent=old,1400)}catch(e){}}));
+    const menu=document.getElementById('menu');
+    menu?.addEventListener('click',()=>{
+      const open=menu.getAttribute('aria-expanded')==='true';
+      menu.setAttribute('aria-expanded',String(!open));
+      const links=document.querySelector('.navlinks');
+      if(!links)return;
+      if(!open){links.style.cssText='display:flex;position:absolute;top:68px;left:12px;right:12px;padding:10px;flex-direction:column;background:#0d0a05;border:1px solid rgba(245,221,160,.16);border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.45)'}else{links.removeAttribute('style')}
+    });
   </script>
 </body>
 </html>
