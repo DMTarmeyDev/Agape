@@ -7,6 +7,7 @@ from . import __version__
 from .bridge import R24, answer_intake, delete_project as bridge_delete_project, ensure_r24, improve_intake, intake as bridge_intake, job as bridge_job, open_result_folder, prepare_intake, projects_with_live_status as bridge_projects, recent_work_with_live_status, revise_intake, revise_work, run_work
 from .capabilities import apply_profile, capability_status, install_support, profile_plan, service_status
 from .planner import plan as make_plan
+from .project_planner import project_blueprint
 from .state import BUILD, ROOT, claim_intake_prepare_job, create_intake_prepare_job, delete_intake_prepare_request, events, get_intake_prepare_job, load_intake_prepare_request, load_settings, recent_work, save_settings, update_intake_prepare_job
 from .system_probe import probe
 from .security import approved_installers, revoke_approval
@@ -226,6 +227,8 @@ class Handler(BaseHTTPRequestHandler):
                 b=body(self);return send_json(self,200,api_key_remove(str(b.get("provider") or "")))
             if u.path=="/api/keys/import":
                 b=body(self);result=api_key_import(str(b.get("path") or "") or None,overwrite=bool(b.get("overwrite")));return send_json(self,200 if result.get("ok") else 404,result)
+            if u.path=="/api/project/blueprint":
+                b=body(self);return send_json(self,200,project_blueprint(str(b.get("description") or b.get("task") or ""),str(b.get("project_type") or "auto"),has_file=bool(b.get("has_file"))))
             if u.path=="/api/intake/start":
                 return send_json(self,202,_start_intake_prepare(body(self)))
             if u.path=="/api/intake":
@@ -244,14 +247,14 @@ class Handler(BaseHTTPRequestHandler):
             if u.path.startswith("/api/work/") and u.path.endswith("/open-folder"):
                 jid=u.path.strip("/").split("/")[2];q=urllib.parse.parse_qs(u.query);idx=int((q.get("index") or [0])[0]);st,p=open_result_folder(jid,idx);return send_json(self,200 if st==200 else 502,p)
             if u.path=="/api/plan":
-                b=body(self);p=make_plan(str(b.get("task") or ""),has_file=bool(b.get("file_name")),project_id=int(b.get("project_id") or 0),quality=str(b.get("quality") or load_settings().get("quality") or "gold"));return send_json(self,200,p)
+                b=body(self);p=make_plan(str(b.get("task") or ""),has_file=bool(b.get("file_name")),project_id=int(b.get("project_id") or 0),quality=str(b.get("quality") or load_settings().get("quality") or "gold"),project_type=str(b.get("project_type") or ""));return send_json(self,200,p)
             if u.path=="/api/run":
                 b=body(self);settings=load_settings()
                 if not isinstance(b.get("coding"),dict):b["coding"]={}
                 b["coding"].setdefault("model_mode",settings.get("coding_model_mode","auto-coding"))
                 b["coding"].setdefault("agent",settings.get("coding_agent","auto"))
                 b["coding"].setdefault("manager",settings.get("code_manager","agape"))
-                p=make_plan(str(b.get("task") or ""),has_file=bool(b.get("file_name")),project_id=int(b.get("project_id") or 0),quality=str(b.get("quality") or settings.get("quality") or "gold"));p["coding"]=dict(b["coding"]);return send_json(self,202,run_work(b,p))
+                p=make_plan(str(b.get("task") or ""),has_file=bool(b.get("file_name")),project_id=int(b.get("project_id") or 0),quality=str(b.get("quality") or settings.get("quality") or "gold"),project_type=str(b.get("project_type") or ""));p["coding"]=dict(b["coding"]);return send_json(self,202,run_work(b,p))
             return send_json(self,404,{"error":"NOT_FOUND"})
         except ValueError as e:return send_json(self,400,{"error":str(e)})
         except Exception as e:return send_json(self,500,{"error":str(e),"type":type(e).__name__})
