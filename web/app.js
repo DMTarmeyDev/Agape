@@ -6,6 +6,8 @@ let INTAKE = null;
 let CURRENT_JOB = '';
 let QUALITY = 'standard';
 let SOURCE_MODE = 'paste';
+let PROJECT_TYPE = 'auto';
+let PROJECT_BLUEPRINT = null;
 let SETUP = {settings:{}};
 let SYSTEM = {};
 let selectedExperience = 'basic';
@@ -328,6 +330,14 @@ async function openGeneratedFolder(jobId, index) {
 if ($('downloadManagerButton')) $('downloadManagerButton').onclick = () => { DOWNLOAD_MANAGER.open = true; renderDownloadManager(); };
 if ($('closeDownloadManager')) $('closeDownloadManager').onclick = () => { DOWNLOAD_MANAGER.open = false; renderDownloadManager(); };
 
+const PROJECT_PLAN_KEY='agape.project-blueprint.v1';
+function resetProjectFirst(){PROJECT_BLUEPRINT=null;PROJECT_TYPE='auto';document.querySelectorAll('.project-type').forEach(n=>n.classList.toggle('selected',n.dataset.projectType==='auto'));$('projectPlanCard')?.classList.add('hidden');$('createWorkflowSteps')?.classList.add('hidden');$('sourceCard')?.classList.add('hidden');$('projectStartCard')?.classList.remove('hidden');try{localStorage.removeItem(PROJECT_PLAN_KEY)}catch{};$('projectGoal')?.focus()}
+function projectToolRow(t){const required=Boolean(t.required);return `<div class="project-tool-row"><span class="project-tool-state ${required?'required':'optional'}">${required?'Required':'Optional'}</span><div><b>${esc(t.name||t.id)}</b><br><small>${esc(t.reason||'')}</small></div></div>`}
+function applyProjectBlueprint(b,{revealWorkflow=false}={}){PROJECT_BLUEPRINT=b||null;PROJECT_TYPE=String(b?.project_type||'general');if(!PROJECT_BLUEPRINT)return;$('projectPlanTitle').textContent=b.project_type_label||'Project plan';$('projectPlanSummary').textContent=b.summary||'';const flow=b.workflow||['Source','Review','Result'];$('projectWorkflowPreview').innerHTML=flow.map((name,i)=>`<span><b>${i+1}</b>${esc(name)}</span>`).join('');const required=(b.tools||[]).filter(x=>x.required),optional=(b.tools||[]).filter(x=>!x.required);$('projectToolPlan').innerHTML=required.length?required.map(projectToolRow).join(''):'<p class="muted">Agape can use its core project tools without extra setup.</p>';$('projectRecommendedTools').classList.toggle('hidden',!optional.length);$('projectRecommendedTools').innerHTML=optional.length?`<h3>Useful only for this project</h3>${optional.map(projectToolRow).join('')}`:'';$('projectPlanCard').classList.remove('hidden');$('projectStartCard').classList.add('hidden');if($('projectCodingOptions')){$('projectCodingOptions').classList.toggle('hidden',!b.show_coding_options);$('projectCodingOptions').open=Boolean(b.show_coding_options)}if($('createDocument'))$('createDocument').textContent=b.result_label||'Create result';const goal=String($('projectGoal')?.value||b.description||'').trim();if($('task')&&goal&&!$('task').value.trim())$('task').value=goal;if($('activeProjectBanner'))$('activeProjectBanner').innerHTML=`<div><b>${esc(b.project_type_label||'Project')}</b><span>${esc(b.subtype?(' · '+b.subtype):'')}</span><br><small>${esc(goal||b.summary||'')}</small></div><button type="button" class="secondary" id="changeProjectFromBanner">Change project type</button>`;const change=$('changeProjectFromBanner');if(change)change.onclick=resetProjectFirst;try{localStorage.setItem(PROJECT_PLAN_KEY,JSON.stringify({blueprint:b,goal}))}catch{};if(revealWorkflow){if($('project'))$('project').value='0';setSourceMode('paste');FILE=null;if($('file'))$('file').value='';$('projectPlanCard').classList.add('hidden');$('createWorkflowSteps').classList.remove('hidden');$('sourceCard').classList.remove('hidden');updateSourceStatus();$('sourceCard').scrollIntoView({behavior:'smooth'})}}
+async function planProjectFirst(){const goal=String($('projectGoal')?.value||'').trim();if(!goal){$('projectPlanStatus').textContent='Describe what you want Agape to achieve first.';$('projectPlanStatus').classList.remove('hidden');$('projectPlanStatus').classList.add('bad');return}const btn=$('planProject');btn.disabled=true;btn.textContent='Choosing tools…';$('projectPlanStatus').classList.add('hidden');try{const selected=document.querySelector('.project-type.selected')?.dataset.projectType||'auto';const b=await api('/api/project/blueprint',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({description:goal,project_type:selected})});applyProjectBlueprint(b)}catch(e){$('projectPlanStatus').textContent=`Agape could not plan this project: ${e.message||e}`;$('projectPlanStatus').classList.remove('hidden');$('projectPlanStatus').classList.add('bad')}finally{btn.disabled=false;btn.textContent='Choose project tools'}}
+document.querySelectorAll('.project-type').forEach(btn=>btn.onclick=()=>document.querySelectorAll('.project-type').forEach(n=>n.classList.toggle('selected',n===btn)));if($('planProject'))$('planProject').onclick=planProjectFirst;if($('changeProjectType'))$('changeProjectType').onclick=resetProjectFirst;if($('startProjectWorkflow'))$('startProjectWorkflow').onclick=()=>applyProjectBlueprint(PROJECT_BLUEPRINT,{revealWorkflow:true});
+function restoreProjectFirst(){try{const saved=JSON.parse(localStorage.getItem(PROJECT_PLAN_KEY)||'null');if(saved?.blueprint){if($('projectGoal'))$('projectGoal').value=String(saved.goal||saved.blueprint.description||'');document.querySelectorAll('.project-type').forEach(n=>n.classList.toggle('selected',n.dataset.projectType===saved.blueprint.project_type));applyProjectBlueprint(saved.blueprint);return}}catch{}resetProjectFirst()}
+
 function page(id) {
   document.querySelectorAll('.page').forEach(node => node.classList.toggle('active', node.id === id));
   document.querySelectorAll('nav button').forEach(node => node.classList.toggle('active', node.dataset.page === id));
@@ -538,6 +548,7 @@ async function boot() {
     applyExperienceUI();
     await loadProjects();
     renderProjectStarters();
+    restoreProjectFirst();
     await hydrateDownloadHistory();
     if (!SETUP.settings.setup_complete) {
       SETUP = await api('/api/setup/status');
@@ -667,6 +678,8 @@ $('analyse').onclick = async () => {
       file_data_base64: fileData,
       project_id: projectId,
       instruction: $('task').value.trim(),
+      project_type: PROJECT_TYPE,
+      project_blueprint: PROJECT_BLUEPRINT,
       also_pdf: true,
     });
     if (!started.prepare_job_id) throw Error('Agape did not return a source-preparation job.');
@@ -873,6 +886,8 @@ $('createDocument').onclick = async () => {
       intake_id: INTAKE.id,
       file_name: 'prepared-intake.txt',
       quality: QUALITY,
+      project_type: PROJECT_TYPE,
+      project_blueprint: PROJECT_BLUEPRINT,
       reviewer_count: Number($('reviewerCount').value || 3),
       also_pdf: true,
       coding: {
@@ -895,7 +910,7 @@ $('createDocument').onclick = async () => {
     showError(error);
   } finally {
     $('createDocument').disabled = false;
-    $('createDocument').textContent = 'Create result';
+    $('createDocument').textContent = PROJECT_BLUEPRINT?.result_label || 'Create result';
   }
 };
 
@@ -1493,9 +1508,11 @@ async function loadApprovedInstallers() {
   if (!box) return;
   try {
     const data = await api('/api/security/approved-installers');
-    const rows = data.approved || [];
+    const rows = (data.approved || []).slice().sort((a,b)=>String(b.approved_at||'').localeCompare(String(a.approved_at||'')));
     if (!rows.length) { box.innerHTML = '<p class="muted">No installers are currently trusted. Agape will ask before adding one.</p>'; return; }
-    box.innerHTML = rows.map(x => `<div class="approval-row"><div><b>${esc(x.name || 'Approved installer')}</b><br><small>${esc(x.kind==='signed_publisher'?'Signed publisher':'Exact installer')} · ${esc(x.signature_status || 'Unknown signature')}</small><br><code>${esc((x.sha256 || x.certificate_thumbprint || '').slice(0,32))}${(x.sha256 || x.certificate_thumbprint || '').length>32?'…':''}</code><br><small>Approved ${esc(x.approved_at || '')}</small></div><button data-revoke-approval="${esc(x.id || '')}">Revoke</button></div>`).join('');
+    const approvalRow=x=>`<div class="approval-row"><div><b>${esc(x.name || 'Approved installer')}</b><br><small>${esc(x.kind==='signed_publisher'?'Signed publisher':'Exact installer')} · ${esc(x.signature_status || 'Unknown signature')}</small><br><code>${esc((x.sha256 || x.certificate_thumbprint || '').slice(0,32))}${(x.sha256 || x.certificate_thumbprint || '').length>32?'…':''}</code><br><small>Approved ${esc(x.approved_at || '')}</small></div><button data-revoke-approval="${esc(x.id || '')}">Revoke</button></div>`;
+    const current=rows.slice(0,3); const older=rows.slice(3);
+    box.innerHTML=current.map(approvalRow).join('')+(older.length?`<details class="approval-archive"><summary>${older.length} older installer approval${older.length===1?'':'s'} · show archive</summary>${older.map(approvalRow).join('')}</details>`:'');
     document.querySelectorAll('[data-revoke-approval]').forEach(button => button.onclick = async () => {
       if (!confirm('Remove this installer approval? Agape will ask again next time.')) return;
       await api('/api/security/approved-installers/revoke',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:button.dataset.revokeApproval})});
@@ -1557,10 +1574,14 @@ function profileStatus(text,cls='muted'){
   const box=$('installProfileStatus');if(!box)return;
   box.className='notice '+cls;box.textContent=text;
 }
+function compactInstallDetail(value,limit=260){
+  const text=String(value||'').replace(/\s+/g,' ').trim();
+  return text.length>limit?text.slice(0,limit-1)+'…':text;
+}
 async function profileCall(label,fn,rows){
   profileStatus('Working on: '+label+'…','warn');
-  try{const out=await fn();rows.push({label,ok:out?.ok!==false,detail:out?.message||out?.error||''});return out;}
-  catch(e){rows.push({label,ok:false,detail:String(e.message||e)});return null;}
+  try{const out=await fn();rows.push({label,ok:out?.ok!==false,detail:compactInstallDetail(out?.message||out?.error||out?.detail||'')});return out;}
+  catch(e){rows.push({label,ok:false,detail:compactInstallDetail(e.message||e)});return null;}
 }
 async function installUsageProfile(exp){
   const meta=INSTALL_PROFILE_META[exp]||INSTALL_PROFILE_META.basic;

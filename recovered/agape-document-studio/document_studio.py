@@ -305,6 +305,78 @@ def markup_leaks(text):return [p for p in MARKUP_PATTERNS if re.search(p,text or
 def safe_name(s):
     s=re.sub(r"[^A-Za-z0-9._ -]+","",clean_inline(s));s=re.sub(r"\s+","-",s).strip("-_.");return s[:90] or "document"
 
+def _bounded_path_component(value,max_len=48):
+    """Return a filesystem-safe component that stays unique when shortened."""
+    base=safe_name(value)
+    max_len=max(12,int(max_len or 12))
+    if len(base)<=max_len:return base
+    digest=hashlib.sha1(base.encode("utf-8",errors="ignore")).hexdigest()[:8]
+    keep=max(3,max_len-len(digest)-1)
+    return base[:keep].rstrip("-_.")+"-"+digest
+
+def _windows_short_output_root(preferred_root):
+    """Return a short persistent Windows output root for overlong project paths.
+
+    Long test/install roots can consume nearly the entire legacy Windows MAX_PATH
+    budget before the project folder or filename is added.  In that case component
+    shortening alone cannot help, so redirect only the generated artifact to a short
+    per-source-root directory.  The returned file path is still recorded in history
+    and handed back to Mainframe/Download Manager.
+    """
+    preferred=Path(preferred_root)
+    digest=hashlib.sha1(str(preferred).encode("utf-8",errors="ignore")).hexdigest()[:8]
+    candidates=[]
+    override=str(os.environ.get("AGAPE_DOCUMENT_SHORT_OUTPUT_ROOT") or "").strip()
+    if override:
+        candidates.append(Path(override).expanduser()/digest)
+    local_appdata=str(os.environ.get("LOCALAPPDATA") or "").strip()
+    if local_appdata:
+        candidates.append(Path(local_appdata)/"Agape"/"DocumentOutputs"/digest)
+    temp_root=str(os.environ.get("TEMP") or tempfile.gettempdir() or "").strip()
+    if temp_root:
+        candidates.append(Path(temp_root)/"AgapeOut"/digest)
+    candidates.append(Path(tempfile.gettempdir())/"AO"/digest)
+    for candidate in candidates:
+        if len(str(candidate))<=160:
+            return candidate
+    return candidates[-1]
+
+def _windows_output_components(output_root,folder_value,filename_value,ext,windows=None):
+    """Bound the complete output path, including an overlong parent root.
+
+    Python/LibreOffice/Explorer combinations on Windows can still surface WinError 3
+    around legacy MAX_PATH boundaries. Keep normal output paths below 238 characters
+    while preserving recognisable names plus hashes. If the configured output root
+    itself consumes the budget, use a short persistent per-root fallback.
+    """
+    preferred_root=Path(output_root)
+    folder=_bounded_path_component(folder_value,36) if folder_value else ""
+    root=preferred_root/folder if folder else preferred_root
+    suffix=str(ext or "odt").lstrip(".")
+    stamp=datetime.now().strftime("%Y%m%d-%H%M%S-%f")[:19]
+    if windows is None:windows=(os.name=="nt")
+    if windows:
+        # Reserve separators, dot, extension and headroom for tools that add
+        # temporary suffixes during conversion.
+        available=238-len(str(root))-1-len(stamp)-1-len(suffix)-1
+        if available<18 and folder:
+            folder=_bounded_path_component(folder_value,18)
+            root=preferred_root/folder
+            available=238-len(str(root))-1-len(stamp)-1-len(suffix)-1
+        if available<18:
+            short_root=_windows_short_output_root(preferred_root)
+            folder=_bounded_path_component(folder_value,36) if folder_value else ""
+            root=short_root/folder if folder else short_root
+            available=238-len(str(root))-1-len(stamp)-1-len(suffix)-1
+            if available<18 and folder:
+                folder=_bounded_path_component(folder_value,18)
+                root=short_root/folder
+                available=238-len(str(root))-1-len(stamp)-1-len(suffix)-1
+        name=_bounded_path_component(filename_value,max(18,min(72,available)))
+    else:
+        name=_bounded_path_component(filename_value,90)
+    return root,folder,name,stamp
+
 
 def find_java():
     candidates=[]
@@ -906,14 +978,13 @@ def create_document(title,app,doc_type,theme,template_id,target_format,content,o
     if not tpl:raise RuntimeError("No usable template found")
     target_format=target_format.lower();allowed=OPEN_OUTPUTS[app]
     if target_format not in allowed:raise ValueError(f"{target_format} is not valid for {app}")
-    stamp=datetime.now().strftime("%Y%m%d-%H%M%S-%f")[:19]
-    chosen_base=safe_name(filename_base or title)
+    ensure_runtime_paths()
+    save_dir,chosen_folder,chosen_base,stamp=_windows_output_components(OUTPUTS,output_folder or "",filename_base or title,target_format)
     base=f"{chosen_base}-{stamp}"
-    save_dir=OUTPUTS
-    if output_folder:
-        save_dir=OUTPUTS/safe_name(output_folder)
     save_dir.mkdir(parents=True,exist_ok=True)
-    tmp=Path(tempfile.mkdtemp(prefix="agape-open-doc-"));primary=tmp/(base+"."+ODF_DOC_EXT[app])
+    runtime_tmp=DATA/"runtime-tmp"
+    runtime_tmp.mkdir(parents=True,exist_ok=True)
+    tmp=Path(tempfile.mkdtemp(prefix="agape-open-doc-",dir=str(runtime_tmp)));primary=tmp/(base+"."+ODF_DOC_EXT[app])
     try:
         try:
             instantiate(tpl,title,content,primary)
@@ -929,6 +1000,8 @@ def create_document(title,app,doc_type,theme,template_id,target_format,content,o
             except Exception as exc:
                 raise RuntimeError(f"DOCUMENT_CONVERSION_STAGE_FAILED: {type(exc).__name__}: {exc}") from exc
             out=save_dir/converted.name;shutil.copy2(converted,out);engine="LibreOffice headless"
+        if os.name=="nt" and len(str(out))>=248:
+            raise RuntimeError(f"DOCUMENT_OUTPUT_PATH_TOO_LONG length={len(str(out))} path={out}")
         audit=validate_output(out)
         add_history(title=title,app=app,doc_type=doc_type,theme=theme,template=tpl["name"],format=target_format,engine=engine,path=str(out),size_bytes=out.stat().st_size,validation=audit,source=tpl["source"])
         return {"ok":bool(audit.get("ok")),"file":str(out),"name":out.name,"engine":engine,"validation":audit,"template":tpl}
