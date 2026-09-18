@@ -19,6 +19,7 @@ DOC="http://127.0.0.1:8851"
 R24_BUNDLED=service_source_path("workflow-bridge")
 DOC_BUNDLED=service_source_path("document-studio")
 EXPECTED_DOC_VERSION="R31.16"
+EXPECTED_DOC_BUILD="R31.16-document-path-reliability-r2.2"
 EXPECTED_R24_BUILD="AGAPE-UNIFIED-R4.7-TARGETED-VALIDATION-REPAIR"
 
 
@@ -164,7 +165,7 @@ def ensure_existing_services(plan: dict[str,Any], project_id: int=0) -> dict[str
             _launch_ps1(root/"START-DMT-SECOND-BRAIN.ps1");result["core"]=_wait(CORE+"/api/version",35)
     if need_docs:
         s,p=request_json("GET",DOC+"/api/health",timeout=2)
-        result["documents"]=bool(s==200 and isinstance(p,dict) and str(p.get("version") or "")==EXPECTED_DOC_VERSION)
+        result["documents"]=bool(s==200 and isinstance(p,dict) and str(p.get("version") or "")==EXPECTED_DOC_VERSION and str(p.get("build_id") or "")==EXPECTED_DOC_BUILD)
         # V3.4 uses a private Document Studio port so an older installed R31.10
         # process on the legacy 8800 port can never be adopted accidentally.
         if not result["documents"] and DOC_BUNDLED.exists():
@@ -172,11 +173,11 @@ def ensure_existing_services(plan: dict[str,Any], project_id: int=0) -> dict[str
             end=time.time()+45
             while time.time()<end:
                 ds,dp=request_json("GET",DOC+"/api/health",timeout=2)
-                if ds==200 and isinstance(dp,dict) and str(dp.get("version") or "")==EXPECTED_DOC_VERSION:
+                if ds==200 and isinstance(dp,dict) and str(dp.get("version") or "")==EXPECTED_DOC_VERSION and str(dp.get("build_id") or "")==EXPECTED_DOC_BUILD:
                     result["documents"]=True;break
                 time.sleep(.5)
         if not result["documents"]:
-            raise RuntimeError("DOCUMENT_STUDIO_INCOMPATIBLE_OR_NOT_READY: V4.7 requires bundled "+EXPECTED_DOC_VERSION+" on private port 8851.")
+            raise RuntimeError("DOCUMENT_STUDIO_INCOMPATIBLE_OR_NOT_READY: requires bundled "+EXPECTED_DOC_VERSION+" build "+EXPECTED_DOC_BUILD+" on private port 8851. Restart Agape after an update so stale child services are replaced.")
     if need_work:
         s,p=request_json("GET","http://127.0.0.1:8820/api/health",timeout=2);result["work"]=s==200 and isinstance(p,dict) and p.get("ok",True) is not False
         if not result["work"] and root:

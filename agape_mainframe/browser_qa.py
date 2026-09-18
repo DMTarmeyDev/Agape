@@ -238,8 +238,11 @@ def run(base_url: str = "http://127.0.0.1:8850", mode: str = "safe") -> dict[str
 
             def advanced_diagnostics():
                 adv = page.locator("#advancedSettings")
-                if not adv.get_attribute("open"):
+                # The boolean HTML `open` attribute is commonly returned as an empty
+                # string when present, so get_attribute("open") is not a safe truth test.
+                if not bool(adv.evaluate("el => el.open")):
                     page.locator("#advancedSettings > summary").click()
+                page.locator("#refreshServices").wait_for(state="visible", timeout=5000)
                 page.locator("#refreshServices").click()
                 page.locator("#refreshEvents").click()
                 page.wait_for_timeout(600)

@@ -18,6 +18,9 @@ from .testing_tools import status as testing_tool_status, install as testing_too
 from .api_keys import status as api_key_status, set_key as api_key_set, remove_key as api_key_remove, import_key_file as api_key_import, bootstrap as api_key_bootstrap
 
 WEB=ROOT/"web"
+WEB_REVISION="R2.4.3-WEB-ROUTER"
+UI_ROUTES={"/","/index.html","/create","/projects","/results","/workspace","/settings"}
+WEB_SUFFIXES={".html",".js",".css",".svg",".png",".jpg",".jpeg",".webp",".ico",".json",".map"}
 
 # Load private saved API keys into environment variables before any provider is used.
 # If API-KEYS.local.json is present, missing keys are imported once without overwriting existing values.
@@ -148,7 +151,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         u=urllib.parse.urlparse(self.path);q=urllib.parse.parse_qs(u.query)
         try:
-            if u.path=="/api/health":return send_json(self,200,{"ok":True,"build":BUILD,"version":__version__,"pid":os.getpid(),"instance_id":INSTANCE_ID,"started_at":STARTED_AT,"active_source_jobs":_active_prepare_job_ids(),"settings":load_settings(),"services_endpoint":"/api/services"})
+            if u.path=="/api/health":return send_json(self,200,{"ok":True,"build":BUILD,"version":__version__,"pid":os.getpid(),"instance_id":INSTANCE_ID,"started_at":STARTED_AT,"active_source_jobs":_active_prepare_job_ids(),"settings":load_settings(),"services_endpoint":"/api/services","web_revision":WEB_REVISION})
             if u.path=="/api/setup/status":
                 system=probe();s=load_settings();return send_json(self,200,{"ok":True,"settings":s,"system":system,"plan":profile_plan(str(s.get("experience") or "basic"),system),"services":service_status()})
             if u.path=="/api/setup/plan":
@@ -175,8 +178,19 @@ class Handler(BaseHTTPRequestHandler):
                 parts=u.path.split("/");jid=parts[3];idx=int((q.get("index") or [0])[0]);return proxy_r24_bytes(self,"/api/jobs/"+urllib.parse.quote(jid)+"/download?index="+str(idx))
             if u.path.startswith("/api/work/"):
                 jid=u.path.split("/",3)[3];s,p=bridge_job(jid);return send_json(self,200 if s==200 else 502,p)
-            if u.path=="/":return self.static("/index.html")
-            if u.path in {"/app.js","/styles.css"}:return self.static(u.path)
+            if u.path in UI_ROUTES:
+                return self.static("/index.html")
+            # Serve every bundled web asset from ROOT/web. This intentionally
+            # comes after /api handling so API typos still return JSON 404s.
+            suffix=Path(u.path).suffix.lower()
+            if suffix in WEB_SUFFIXES:
+                target=(WEB/u.path.lstrip("/")).resolve()
+                if (WEB in target.parents or target==WEB) and target.is_file():
+                    return self.static(u.path)
+            # Human-facing routes are SPA-style entry points. Direct browser
+            # navigation to a UI route should reopen Agape, not expose an API 404.
+            if not u.path.startswith("/api/") and "." not in Path(u.path).name:
+                return self.static("/index.html")
             return send_json(self,404,{"error":"NOT_FOUND"})
         except Exception as e:return send_json(self,500,{"error":str(e),"type":type(e).__name__})
     def do_POST(self):

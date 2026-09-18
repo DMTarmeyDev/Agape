@@ -30,7 +30,7 @@ jobs:
         run: python scripts/full_dummy_qa.py --output "${{ runner.temp }}/agape-full-qa"
       - name: Upload QA evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-full-dummy-qa
           path: |
@@ -114,7 +114,7 @@ jobs:
           mkdir -p release
           cp dist/Agape-Linux-x86_64 release/Agape-Linux-x86_64
           chmod +x release/Agape-Linux-x86_64
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact }}
           path: release/*
@@ -122,7 +122,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: release
           merge-multiple: true
