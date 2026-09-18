@@ -10,6 +10,10 @@ android {
     namespace = "dev.dmtarmey.agape"
     compileSdk = 36
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "dev.dmtarmey.agape"
         minSdk = 29

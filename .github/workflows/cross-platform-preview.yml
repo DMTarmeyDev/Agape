@@ -19,8 +19,14 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-      - name: Install test dependencies
-        run: python -m pip install -U pip pytest
+      - name: Install validation dependencies
+        run: |
+          python -m pip install -U pip
+          python -m pip install -r requirements-runtime.txt
+          python -m pip install "pytest>=8,<9"
+          python -m pip check
+      - name: Verify critical runtime imports
+        run: python -c "import requests, keyring, pypdf, pymupdf, PIL, odf, docx, openpyxl, pptx; print('VALIDATION_IMPORTS=PASS')"
       - name: Public release audit
         run: python scripts/public_audit.py
       - name: README and release-link contract audit
@@ -103,6 +109,8 @@ jobs:
           java-version: '17'
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
       - name: Install Android 36 SDK
         run: sdkmanager 'platforms;android-36' 'build-tools;36.1.0'
       - name: Set up Gradle 9.6
