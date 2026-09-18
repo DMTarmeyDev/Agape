@@ -20,7 +20,7 @@ SERVICE_ENDPOINTS = {
 
 PROFILE_DEFAULTS = {
     "basic": ["ai-routing","projects","documents","research"],
-    "standard": ["ai-routing","projects","documents","research","work-engine","development","local-ai","artifacts"],
+    "standard": ["ai-routing","projects","documents","research","work-engine","development","local-ai","artifacts","browser-automation"],
     "advanced": ["ai-routing","projects","documents","research","work-engine","development","local-ai","artifacts","aider","communications","browser-automation","advanced-rag","mcp","public-access"],
 }
 
@@ -115,7 +115,7 @@ def profile_plan(experience: str, system: dict[str, Any]) -> dict[str, Any]:
             z["recommended_now"]=False
             if pkg=="libreoffice":z["recommended_now"]=True
             elif cid=="development" and pkg=="git":z["recommended_now"]=True
-            elif cid=="local-ai" and pkg=="ollama" and float(system.get("ram_gb") or 0)>=12:z["recommended_now"]=True
+            elif cid=="local-ai" and pkg=="ollama" and exp=="advanced" and float(system.get("ram_gb") or 0)>=12:z["recommended_now"]=True
             elif cid=="communications" and pkg=="keyring":z["recommended_now"]=True
             elif cid=="aider" and pkg in {"aider-chat","git"}:z["recommended_now"]=True
             elif cid=="research" and pkg=="requests-cache" and exp!="basic":z["recommended_now"]=True

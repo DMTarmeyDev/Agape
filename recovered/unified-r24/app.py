@@ -796,12 +796,12 @@ def _public_research_evidence_text(package: dict[str,Any], max_chars: int = 4800
     rows=[]; used=0
     for src in package.get("sources") or []:
         if not isinstance(src,dict): continue
-        piece=(f"SOURCE: {src.get('title') or 'Public source'}\\nURL: {src.get('url') or ''}\\n"
-               f"PROVIDER: {src.get('search_provider') or src.get('source_kind') or ''}\\n"
-               f"EVIDENCE: {str(src.get('text') or src.get('snippet') or '')[:4500]}\\n")
+        piece=(f"SOURCE: {src.get('title') or 'Public source'}\nURL: {src.get('url') or ''}\n"
+               f"PROVIDER: {src.get('search_provider') or src.get('source_kind') or ''}\n"
+               f"EVIDENCE: {str(src.get('text') or src.get('snippet') or '')[:4500]}\n")
         if used+len(piece)>max_chars: break
         rows.append(piece); used+=len(piece)
-    return "\\n".join(rows)
+    return "\n".join(rows)
 
 def unresolved_questions(ai_fill: dict[str, Any]) -> list[dict[str, str]]:
     out: list[dict[str, str]] = []
@@ -1115,7 +1115,15 @@ def deterministic_source_fields(project_name: str, project_info: str, extra_inst
     returning an all-None form.
     """
     out: dict[str, str] = {}
-    text = "\n".join(x for x in (str(project_info or ""), str(extra_instruction or "")) if x)
+    project_info=str(project_info or "")
+    extra_instruction=str(extra_instruction or "")
+    # Recover project text saved by older Mainframe builds with literal escaped
+    # line breaks before labelled-field extraction runs.
+    if project_info.count(r"\n") >= 2:
+        project_info=project_info.replace(r"\r\n","\n").replace(r"\n","\n")
+    if extra_instruction.count(r"\n") >= 2:
+        extra_instruction=extra_instruction.replace(r"\r\n","\n").replace(r"\n","\n")
+    text = "\n".join(x for x in (project_info, extra_instruction) if x)
     for raw in text.splitlines():
         line = re.sub(r"^\s*(?:\d+[.)]|[-*•])\s*", "", raw).strip()
         if not line or len(line) > 9000:
@@ -1331,7 +1339,9 @@ def _validation_failure_details(payload: Any) -> dict[str, list[str]] | None:
         return None
     missing = [str(x).strip() for x in (obj.get("missing") or []) if str(x).strip()]
     short = [str(x).strip() for x in (obj.get("short") or []) if str(x).strip()]
-    return {"missing": missing, "short": short}
+    duplicates = [str(x).strip() for x in (obj.get("duplicates") or []) if str(x).strip()]
+    artifacts = [str(x).strip() for x in (obj.get("artifacts") or []) if str(x).strip()]
+    return {"missing": missing, "short": short, "duplicates": duplicates, "artifacts": artifacts}
 
 
 def _business_quality_contract(doc_type: str) -> str:
@@ -1343,13 +1353,17 @@ def _business_quality_contract(doc_type: str) -> str:
         "Before finalising, ensure the document contains substantive, decision-ready sections for "
         "TAM / SAM / SOM, Customer Personas, Recommendation / Next Step, and Sources / Evidence when relevant to the supplied project. "
         "Do not leave these as headings only. Use supplied or researched evidence where available, label assumptions clearly, "
-        "and never invent private customers, revenue, contracts, approvals or unsupported market figures."
+        "and never invent private customers, revenue, contracts, approvals or unsupported market figures. "
+        "There must be one authoritative version of each section: do not duplicate Executive Summary, market, financial, risk or recommendation sections. "
+        "Before finalising, reconcile repeated figures, dates and assumptions so the document does not present competing financial forecasts or valuations."
     )
 
 
 def _validation_repair_instruction(details: dict[str, list[str]], attempt: int) -> str:
     missing = details.get("missing") or []
     short = details.get("short") or []
+    duplicates = details.get("duplicates") or []
+    artifacts = details.get("artifacts") or []
     lines = [
         "AGAPE TARGETED VALIDATION REPAIR PASS " + str(attempt) + ".",
         "Regenerate the complete document, preserving all supplied facts and already-strong sections.",
@@ -1358,6 +1372,10 @@ def _validation_repair_instruction(details: dict[str, list[str]], attempt: int) 
         lines.append("The validator says these required sections are MISSING and must be added with substantive content: " + "; ".join(missing) + ".")
     if short:
         lines.append("The validator says these sections are TOO SHORT and must be expanded with useful analysis, evidence, assumptions, implications and concrete detail: " + "; ".join(short) + ".")
+    if duplicates:
+        lines.append("The validator found DUPLICATE versions of these sections. Return exactly one reconciled authoritative section for each: " + "; ".join(duplicates) + ".")
+    if artifacts:
+        lines.append("Remove internal/formatting artefacts from the client document: " + "; ".join(artifacts) + ".")
     lines.extend([
         "For Sources / Evidence, include a clear evidence/source section rather than merely saying research is required.",
         "For Recommendation / Next Step, state a concrete recommendation and specific next actions.",

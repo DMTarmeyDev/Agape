@@ -126,6 +126,7 @@ function downloadInstruction(item) {
   if (item.status === 'ready') return 'The file is ready. Press Download to save it to your computer.';
   if (item.status === 'downloading') return 'Keep this Agape window open until this file reaches 100%.';
   if (item.status === 'completed') return 'Saved successfully. You can download it again or open the folder containing Agape’s generated copy.';
+  if (item.status === 'failed' && item.kind === 'preparation') return 'Result creation stopped before a new file was produced. Fix the problem shown below, then press Create result again.';
   if (item.status === 'failed') return 'The file was not downloaded. Read the error below, then press Retry download.';
   return item.instruction || 'Waiting for Agape.';
 }
@@ -184,7 +185,10 @@ function renderDownloadManager() {
   const prep = DOWNLOAD_MANAGER.preparation;
   const rows = [];
   if (prep && prep.status !== 'idle') rows.push({...prep,kind:'preparation'});
-  DOWNLOAD_MANAGER.items.forEach(item => rows.push({...item,kind:'file'}));
+  const currentJob = String(DOWNLOAD_MANAGER.jobId || CURRENT_JOB || '');
+  DOWNLOAD_MANAGER.items
+    .filter(item => currentJob && String(item.jobId || '') === currentJob)
+    .forEach(item => rows.push({...item,kind:'file'}));
   const active = rows.filter(x => ['preparing','downloading'].includes(x.status)).length;
   const completed = rows.filter(x => ['ready','completed'].includes(x.status)).length;
   button.classList.toggle('hidden', !rows.length);
@@ -211,6 +215,9 @@ function renderDownloadManager() {
 function beginResultPreparation(text='Agape is preparing the result.', percent=1) {
   DOWNLOAD_MANAGER.startedAt = Date.now();
   DOWNLOAD_MANAGER.jobId = '';
+  // A new creation run owns a fresh manager view. Previous files remain in
+  // Results/history but must never look like outputs from this new job.
+  DOWNLOAD_MANAGER.items = [];
   DOWNLOAD_MANAGER.preparation = {name:'Result preparation',status:'preparing',progress:Number(percent)||1,stage:'Starting',instruction:text,eta:''};
   renderDownloadManager();
 }
@@ -239,7 +246,7 @@ function registerResultFiles(result, jobId='') {
     return {index,jobId:DOWNLOAD_MANAGER.jobId,projectTitle:title,name:String(rawName).split(/[\\/]/).pop(),status:'ready',progress:100,stage:'Ready to download',eta:'Ready now',error:''};
   });
   const keys = new Set(fresh.map(x => `${x.jobId}:${x.index}`));
-  DOWNLOAD_MANAGER.items = [...fresh, ...DOWNLOAD_MANAGER.items.filter(x => !keys.has(`${x.jobId}:${x.index}`))].slice(0,80);
+  DOWNLOAD_MANAGER.items = fresh.slice(0,80);
   saveDownloadManagerState();
   renderDownloadManager();
   return files;
@@ -380,15 +387,33 @@ function activeSourceReady() {
 
 
 function renderProjectStarters() {
-  const host=$('projectStarterList'); if (!host) return;
-  const rows=Array.isArray(window.AGAPE_PROJECT_TEMPLATES)?window.AGAPE_PROJECT_TEMPLATES:[];
-  host.innerHTML=rows.map(row=>`<button type="button" class="result-file project-starter" data-project-starter="${esc(row.id)}"><span><b>${esc(row.name)}</b><br><small>${esc(row.description||'Prepared project')}</small></span><span>Load →</span></button>`).join('') || '<p class="muted">No starter projects bundled.</p>';
-  host.querySelectorAll('[data-project-starter]').forEach(button=>button.onclick=()=>{
-    const row=rows.find(x=>x.id===button.dataset.projectStarter); if(!row)return;
-    $('sourceText').value=String(row.source_text||''); $('task').value=String(row.task||'');
-    setSourceMode('paste'); updateSourceStatus(); $('projectStarterDetails').open=false;
-    toast(`Loaded project: ${row.name}`); $('sourceText').focus();
-  });
+  const select = $('sourceTemplateSelect');
+  const load = $('loadSourceTemplate');
+  const help = $('sourceTemplateHelp');
+  if (!select || !load) return;
+  const rows = Array.isArray(window.AGAPE_PROJECT_TEMPLATES) ? window.AGAPE_PROJECT_TEMPLATES : [];
+  select.innerHTML = '<option value="">Blank source</option>' + rows.map(row => `<option value="${esc(row.id)}">${esc(row.name)}</option>`).join('');
+
+  const selectedTemplate = () => rows.find(row => String(row.id) === String(select.value || '')) || null;
+  const refreshTemplateChoice = () => {
+    const row = selectedTemplate();
+    load.disabled = !row;
+    if (help) help.textContent = row ? String(row.description || 'Load this template into the editable source box.') : 'Start blank, or choose a built-in template and load it into the editable source box.';
+  };
+  select.onchange = refreshTemplateChoice;
+  load.onclick = () => {
+    const row = selectedTemplate();
+    if (!row) return;
+    const current = String($('sourceText').value || '').trim();
+    if (current && current !== String(row.source_text || '').trim() && !window.confirm('Replace the current pasted source with this template?')) return;
+    $('sourceText').value = String(row.source_text || '');
+    $('task').value = String(row.task || '');
+    setSourceMode('paste');
+    updateSourceStatus();
+    toast(`Loaded template: ${row.name}`);
+    $('sourceText').focus();
+  };
+  refreshTemplateChoice();
 }
 
 async function recoverProjects() {
@@ -434,13 +459,41 @@ async function loadProjects() {
   const data = await api('/api/projects').catch(() => ({projects:[]}));
   const rows = data.projects || [];
   $('project').innerHTML = '<option value="0">Choose a saved project</option>' + rows.map(p => `<option value="${Number(p.id)||0}">${esc(p.name)}</option>`).join('');
-  $('projectList').innerHTML = rows.length ? rows.map(p => `<button class="result-file" data-pid="${Number(p.id)||0}"><span><b>${esc(p.name)}</b><br><small>${esc(p.goal || p.description || 'Saved project')}</small></span><span><b>${esc(canonicalStatusLabel(p))}</b><br><small>Use as source →</small></span></button>`).join('') : '<p class="muted">No saved user projects are currently available.</p>';
+  $('projectList').innerHTML = rows.length ? rows.map(p => `
+    <div class="project-row">
+      <button class="result-file project-use" data-pid="${Number(p.id)||0}">
+        <span><b>${esc(p.name)}</b><br><small>${esc(p.goal || p.description || 'Saved project')}</small></span>
+        <span><b>${esc(canonicalStatusLabel(p))}</b><br><small>Use as source -></small></span>
+      </button>
+      <button class="project-delete" data-delete-pid="${Number(p.id)||0}" data-delete-name="${esc(p.name)}" title="Permanently delete this project">Delete</button>
+    </div>`).join('') : '<p class="muted">No saved user projects are currently available.</p>';
   document.querySelectorAll('[data-pid]').forEach(button => button.onclick = () => {
     $('project').value = button.dataset.pid;
     setSourceMode('project');
     page('home');
     setStep(1);
     $('sourceCard').scrollIntoView({behavior:'smooth'});
+  });
+  document.querySelectorAll('[data-delete-pid]').forEach(button => button.onclick = async event => {
+    event.stopPropagation();
+    const projectId = Number(button.dataset.deletePid || 0);
+    const projectName = button.dataset.deleteName || 'this project';
+    if (!projectId || !window.confirm(`Permanently delete "${projectName}"?
+
+This removes the saved project and its Core project data. Existing generated results remain in Results & versions.`)) return;
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Deleting...';
+    try {
+      await api('/api/projects/delete', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({project_id:projectId})});
+      if (Number($('project').value || 0) === projectId) $('project').value = '0';
+      await loadProjects();
+      if ($('workspace')?.classList.contains('active')) await loadWorkspace();
+    } catch (error) {
+      button.disabled = false;
+      button.textContent = originalText;
+      window.alert('Agape could not delete this project: ' + (error?.message || error));
+    }
   });
   updateSourceStatus();
 }
@@ -646,9 +699,19 @@ function fieldValue(row) {
 function fieldLabel(key) {
   return key.replaceAll('_',' ').replace(/\b\w/g, ch => ch.toUpperCase());
 }
+function humanFieldReason(key, row, priority=false) {
+  const raw = row && typeof row === 'object' ? String(row.reason || row.status || '') : '';
+  const low = raw.toLowerCase();
+  const value = fieldValue(row).trim().toLowerCase();
+  if (value === 'none' || low.includes('no reliable or relevant value') || low.includes('could not responsibly infer')) {
+    return priority ? 'Add this if it is known and relevant. Agape will not invent it.' : 'Not established from the current source yet.';
+  }
+  return raw;
+}
 function fieldMarkup(key, row, priority=false) {
-  const reason = row && typeof row === 'object' ? (row.reason || row.status || '') : '';
-  return `<label class="${priority ? 'priority-field' : ''}"><span>${esc(fieldLabel(key))}</span><textarea data-field="${esc(key)}" rows="3" spellcheck="true" autocapitalize="sentences">${esc(fieldValue(row))}</textarea>${reason ? `<small>${esc(reason)}</small>` : ''}</label>`;
+  const reason = humanFieldReason(key,row,priority);
+  const value = fieldValue(row).trim().toLowerCase() === 'none' ? '' : fieldValue(row);
+  return `<label class="${priority ? 'priority-field' : ''}"><span>${esc(fieldLabel(key))}</span><textarea data-field="${esc(key)}" rows="3" spellcheck="true" autocapitalize="sentences" placeholder="${priority ? 'Add if known' : ''}">${esc(value)}</textarea>${reason ? `<small>${esc(reason)}</small>` : ''}</label>`;
 }
 
 function writingCheckMarkup(report) {
@@ -711,7 +774,13 @@ function renderIntake(intake) {
   extra.classList.toggle('hidden', !opportunities.length);
   $('extraInfoSummary').textContent = 'Extra information could be gathered';
   $('extraInfoCount').textContent = String(opportunities.length);
-  $('extraInfoList').innerHTML = opportunities.map(x => `<div class="research-opportunity"><b>${esc(x.label || 'Public information')}</b><br><span class="muted">${esc(x.reason || x.question || 'Public research could strengthen this project.')}</span></div>`).join('');
+  $('extraInfoList').innerHTML = opportunities.map(x => {
+    const raw=String(x.reason || '');
+    const reason=(raw.toLowerCase().includes('no reliable or relevant value') || raw.toLowerCase().includes('could not responsibly infer'))
+      ? 'Agape has not confirmed this from the saved source yet. Public research may strengthen it.'
+      : (raw || x.question || 'Public research could strengthen this project.');
+    return `<div class="research-opportunity"><b>${esc(x.label || 'Public information')}</b><br><span class="muted">${esc(reason)}</span></div>`;
+  }).join('');
   if (!opportunities.length) { extra.open=false; $('researchProgress').classList.add('hidden'); } else { extra.open=extraWasOpen; }
   LAST_EXTRA_INTAKE_ID = currentExtraIntakeId;
 
@@ -996,6 +1065,7 @@ function showError(error) {
   $('progressText').textContent = String(error.message || error);
   $('progressBar').classList.add('failed');
   setProgress(100, 'Stopped');
+  DOWNLOAD_MANAGER.jobId = CURRENT_JOB || DOWNLOAD_MANAGER.jobId;
   DOWNLOAD_MANAGER.preparation = {...DOWNLOAD_MANAGER.preparation,status:'failed',progress:100,stage:'Stopped',eta:'',error:String(error.message || error)};
   renderDownloadManager();
   $('tech').textContent = String(error.stack || error);
@@ -1273,7 +1343,8 @@ async function codingToolAction(tool, action) {
   if (button) button.disabled = true;
   try {
     const data = await api('/api/coding/tools/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool,action})});
-    toast(data.message || 'Done');
+    if(data && data.ok===false) throw new Error(data.message || data.error || data.output || 'Coding tool action did not complete');
+    toast(data.message || (action==='install'?'Installation completed':'Done'));
     setTimeout(loadCodingTools, 1200);
   } catch (error) {
     toast(error.message || String(error));
@@ -1298,7 +1369,7 @@ async function loadCodingTools() {
     const card=(title,item,actions)=>`<div class="tool-card"><div><b>${esc(title)}</b> <span class="${item?.ready?'ok':'warn'}">${item?.ready?'Ready':item?.planned?'Planned':'Not installed'}</span><br><small>${esc(item?.summary||'')}</small>${item?.windows_note?`<br><small>${esc(item.windows_note)}</small>`:''}</div><div class="tool-actions">${actions}</div></div>`;
     box.innerHTML =
       card('Aider',agentMap.aider, agentMap.aider?.ready ? '' : '<button data-support-package="aider-chat" onclick="installCodingSupport(\'pip\',\'aider-chat\')">Install Aider</button>') +
-      card('OpenHands',agentMap.openhands, agentMap.openhands?.ready ? '' : '<button data-coding-tool="openhands" data-coding-action="help" onclick="codingToolAction(\'openhands\',\'help\')">Setup instructions</button>') +
+      card('OpenHands',agentMap.openhands, agentMap.openhands?.ready ? '<button data-coding-tool="openhands" data-coding-action="open" onclick="codingToolAction(\'openhands\',\'open\')">Open OpenHands</button>' : '<button data-coding-tool="openhands" data-coding-action="install" onclick="codingToolAction(\'openhands\',\'install\')">Install OpenHands</button><button class="secondary" data-coding-tool="openhands" data-coding-action="help" onclick="codingToolAction(\'openhands\',\'help\')">Setup instructions</button>') +
       card('Open Interpreter',agentMap['open-interpreter'], agentMap['open-interpreter']?.ready ? '' : '<button data-coding-tool="open-interpreter" data-coding-action="help" onclick="codingToolAction(\'open-interpreter\',\'help\')">Project / install info</button>') +
       card('Theia Lite',mgrMap['theia-lite'],'<span class="muted">Embedded build option; not downloaded automatically.</span>') +
       card('Theia Full',mgrMap['theia-full'], mgrMap['theia-full']?.ready ? '<button data-coding-tool="theia-full" data-coding-action="open" onclick="codingToolAction(\'theia-full\',\'open\')">Open</button>' : '<button data-coding-tool="theia-full" data-coding-action="download" onclick="codingToolAction(\'theia-full\',\'download\')">Download Theia</button>') +
@@ -1449,7 +1520,7 @@ async function loadTestingTools(){
   try{
     const data=await api('/api/testing/tools');
     const rows=data.tools||[];
-    box.innerHTML=rows.map(t=>`<div class="cap-row"><div><b>${esc(t.name)}</b> ${t.recommended?'<span class="ok">Recommended</span>':'<span class="muted">Optional</span>'}<br><small>${esc(t.why)}</small><br><small class="muted">${esc(t.cost)}</small></div><div class="cap-actions"><span class="${t.installed?'ok':'warn'}">${t.installed?'Installed':'Not installed'}</span>${t.installed?'':`<button class="secondary installTestingTool" data-tool="${esc(t.id)}">Install</button>`}</div></div>`).join('') || '<p class="muted">No testing tools reported.</p>';
+    box.innerHTML=rows.map(t=>{const tier=t.tier==='advanced'?'Full Developer/Admin':t.tier==='standard'?'Standard':'Essential';return `<div class="cap-row"><div><b>${esc(t.name)}</b> ${t.recommended?'<span class="ok">Standard</span>':`<span class="muted">${esc(tier)}</span>`}<br><small>${esc(t.why)}</small><br><small class="muted">${esc(t.cost)}</small>${t.detail?`<br><small class="muted">Status: ${esc(t.detail)}</small>`:''}</div><div class="cap-actions"><span class="${t.installed?'ok':'warn'}">${t.installed?'Installed':'Not installed'}</span>${t.installed?'':`<button class="secondary installTestingTool" data-tool="${esc(t.id)}">Install</button>`}</div></div>`}).join('') || '<p class="muted">No testing tools reported.</p>';
     document.querySelectorAll('.installTestingTool').forEach(btn=>btn.onclick=()=>installTestingTool(btn.dataset.tool));
   }catch(e){box.innerHTML=`<p class="bad">Could not check testing tools: ${esc(String(e.message||e))}</p>`;}
 }
@@ -1465,12 +1536,61 @@ async function installTestingTool(id){
 }
 if($('refreshTestingTools')) $('refreshTestingTools').onclick=loadTestingTools;
 if($('installRecommendedTesting')) $('installRecommendedTesting').onclick=async()=>{
-  if(!confirm('Install the recommended testing set?\n\nThis adds accessibility, API edge-case, security and browser quality testing. Each tool is optional and can also be installed separately.'))return;
+  if(!confirm('Install the Standard testing set?\n\nThis installs the lighter everyday developer checks: accessibility, API edge cases and Lighthouse. ZAP, load testing and Android tooling stay in Full Developer/Admin.'))return;
   const data=await api('/api/testing/tools');
   for(const id of (data.recommended_ids||[])){
     const row=(data.tools||[]).find(x=>x.id===id);
     if(row && !row.installed){await api('/api/testing/tools/install',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool:id})}).catch(()=>null);}
   }
   await loadTestingTools();
-  toast('Recommended testing tools install attempt finished');
+  toast('Standard testing tools install attempt finished');
 };
+
+// R2.4: coherent installation profiles. These preserve the existing experience
+// setting values for backwards compatibility while making downloads explicit.
+const INSTALL_PROFILE_META={
+  basic:{label:'Essential / Low use',warning:'Installs no heavy optional toolchain. Agape core, documents and research remain available.'},
+  standard:{label:'Standard / Medium use',warning:'Adds Git, VS Code, Node, Chromium QA, axe, Schemathesis and Lighthouse.'},
+  advanced:{label:'Full Developer/Admin / High use',warning:'Large install. Adds Standard tools plus Ollama/Aider support, OWASP ZAP + Java, k6, Appium Android prerequisites and OpenHands through WSL. WSL/Android setup can require a restart or device/emulator setup.'}
+};
+function profileStatus(text,cls='muted'){
+  const box=$('installProfileStatus');if(!box)return;
+  box.className='notice '+cls;box.textContent=text;
+}
+async function profileCall(label,fn,rows){
+  profileStatus('Working on: '+label+'…','warn');
+  try{const out=await fn();rows.push({label,ok:out?.ok!==false,detail:out?.message||out?.error||''});return out;}
+  catch(e){rows.push({label,ok:false,detail:String(e.message||e)});return null;}
+}
+async function installUsageProfile(exp){
+  const meta=INSTALL_PROFILE_META[exp]||INSTALL_PROFILE_META.basic;
+  if(!confirm(`Use ${meta.label}?\n\n${meta.warning}\n\nAgape will only start optional installers after this confirmation.`))return;
+  const rows=[];
+  const plan=await profileCall('saving Agape profile',()=>api(`/api/setup/plan?experience=${encodeURIComponent(exp)}`),rows);
+  if(plan?.plan){
+    const caps=(plan.plan.capabilities||[]).filter(x=>x.required||x.recommended_now).map(x=>x.id);
+    await profileCall('enabling profile capabilities',()=>api('/api/setup/apply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({experience:exp,selected_capabilities:caps})}),rows);
+  }
+  if(exp!=='basic'){
+    for(const [kind,pkg,label] of [
+      ['winget','git','Git'],['winget','vscode','VS Code'],['winget','node','Node.js LTS']
+    ]) await profileCall('install/check '+label,()=>api('/api/support/install',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,package:pkg})}),rows);
+    for(const [id,label] of [['axe','axe accessibility'],['schemathesis','Schemathesis'],['lighthouse','Lighthouse CI']])
+      await profileCall('install/check '+label,()=>api('/api/testing/tools/install',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool:id})}),rows);
+    await profileCall('install/check Chromium QA',()=>api('/api/qa/browser/install-chromium',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}),rows);
+  }
+  if(exp==='advanced'){
+    await profileCall('install/check Aider',()=>api('/api/support/install',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'pip',package:'aider-chat'})}),rows);
+    await profileCall('install/check Ollama',()=>api('/api/support/install',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'winget',package:'ollama'})}),rows);
+    for(const [id,label] of [['zap','OWASP ZAP + Java'],['k6','k6 load testing'],['appium-android','Appium Android']])
+      await profileCall('install/check '+label,()=>api('/api/testing/tools/install',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool:id})}),rows);
+    await profileCall('install/check OpenHands',()=>api('/api/coding/tools/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool:'openhands',action:'install'})}),rows);
+  }
+  const failed=rows.filter(x=>!x.ok);
+  const done=rows.filter(x=>x.ok).length;
+  profileStatus(`${meta.label}: ${done}/${rows.length} steps completed${failed.length?`. ${failed.length} need attention: `+failed.map(x=>x.label+(x.detail?' — '+x.detail:'')).join(' | '):'. Ready.'}`,failed.length?'warn':'ready');
+  await loadSettings().catch(()=>null);
+}
+if($('installProfileBasic')) $('installProfileBasic').onclick=()=>installUsageProfile('basic');
+if($('installProfileStandard')) $('installProfileStandard').onclick=()=>installUsageProfile('standard');
+if($('installProfileAdvanced')) $('installProfileAdvanced').onclick=()=>installUsageProfile('advanced');

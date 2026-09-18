@@ -12,11 +12,11 @@
   "document_studio": "R31.16",
   "gold_review_default": 3,
   "release_tests": {
-    "mainframe": "138/138 PASS",
-    "workflow_bridge": "56/56 PASS",
+    "mainframe": "162/162 PASS",
+    "workflow_bridge": "57/57 PASS",
     "provider_preflight": "PASS",
     "activity_terminal_sync": "PASS",
-    "javascript_syntax": "PASS",
+    "javascript_syntax": "PASS (web/app.js + web/project_templates.js)",
     "python_compile": "PASS",
     "document_studio_import": "PASS (R31.16); targeted Findings/Analysis repair regression PASS; full LibreOffice conversion self-test runs on Windows installer host",
     "windows_sqlite_close": "PASS",
@@ -60,5 +60,14 @@
   "download_reliability": "finished-result proxy follows the active Workflow Bridge endpoint (8852), preserves upstream HTTP errors, and is covered by DOCX/PDF byte-validation plus retry QA.",
   "review_ui": "Private/user-specific questions and public-research opportunities are separate. Extra-information is omitted when unnecessary, collapsed when researchable, and disappears after research resolves the public gaps.",
   "v56": "Public research disclosure, real evidence collection, project auto-save, persistent multi-job downloads, path healing, QA selector repair.",
-  "v561": "Canonical cross-page status synchronization: unfinished jobs refresh from Workflow Bridge and Projects/Results/Workspace share one status source."
+  "v561": "Canonical cross-page status synchronization: unfinished jobs refresh from Workflow Bridge and Projects/Results/Workspace share one status source.",
+  "saved_project_context_r23": "legacy escaped-line recovery; real-newline persistence; source-fact naming; concise unresolved review UI",
+  "source_template_library": "R2.4.4 data-driven Source dropdown; Blank + bundled templates; Agape full-system source test retained across full rebuilds",
+  "local_session_compatibility": "R2.4.4 server-side loopback-only one-retry on SESSION_REQUIRED using Core local token; token never exposed to browser or remote hosts",
+  "web_revision": "R2.4.4-TEMPLATES-SESSION",
+  "cross_platform_release": "V5.6.1-R2.5.0",
+  "android_version": "5.6.1-r2.5.0-alpha",
+  "android_default_url": "https://agape-alpha.tail2a2d28.ts.net/",
+  "project_delete": "R2.4.5",
+  "projectless_document_jobs": "R2.4.6"
 }
