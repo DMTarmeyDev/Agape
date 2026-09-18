@@ -23,13 +23,36 @@
 
   <main>
     <section id="home" class="page active">
-      <div class="workflow-steps" aria-label="Create workflow">
+      <div class="card hero project-first" id="projectStartCard">
+        <div class="step-label">New project</div>
+        <h2>What are you creating?</h2>
+        <p class="muted">Start with the outcome. Agape decides which capabilities and tools this project needs, then hides everything that is not relevant.</p>
+        <div class="project-type-grid" role="list" aria-label="Choose project type">
+          <button type="button" class="project-type selected" data-project-type="auto"><b>Let Agape decide</b><span>Describe the outcome</span></button>
+          <button type="button" class="project-type" data-project-type="document"><b>Document</b><span>Plans, reports, proposals, tenders</span></button>
+          <button type="button" class="project-type" data-project-type="development"><b>Software / Coding</b><span>Apps, websites, APIs, repairs</span></button>
+          <button type="button" class="project-type" data-project-type="research"><b>Research</b><span>Evidence, comparisons, reports</span></button>
+          <button type="button" class="project-type" data-project-type="business"><b>Business / Planning</b><span>Strategy, forecasts, commercial plans</span></button>
+          <button type="button" class="project-type" data-project-type="automation"><b>Automation / Workflow</b><span>Integrations, agents, repeated work</span></button>
+          <button type="button" class="project-type" data-project-type="communications"><b>Communications</b><span>Email and approved messaging</span></button>
+        </div>
+        <label class="full project-goal-field"><span>What do you want to achieve?</span><textarea id="projectGoal" rows="5" spellcheck="true" autocapitalize="sentences" placeholder="Example: Create a bank-ready business plan for a commercial flooring company, with public market research and a DOCX/PDF result."></textarea></label>
+        <button id="planProject" class="primary large" type="button">Choose project tools</button>
+        <div id="projectPlanStatus" class="notice hidden" aria-live="polite"></div>
+      </div>
+      <div id="projectPlanCard" class="card hidden">
+        <div class="row between"><div><div class="step-label">Project setup</div><h2 id="projectPlanTitle">Project plan</h2><p id="projectPlanSummary" class="muted"></p></div><button id="changeProjectType" class="secondary" type="button">Change</button></div>
+        <div id="projectWorkflowPreview" class="project-workflow-preview"></div><h3>Agape will use</h3><div id="projectToolPlan" class="project-tool-plan"></div><div id="projectRecommendedTools" class="project-recommended hidden"></div>
+        <div class="next-row"><button id="startProjectWorkflow" class="primary large" type="button">Continue to project</button></div>
+      </div>
+      <div class="workflow-steps hidden" id="createWorkflowSteps" aria-label="Create workflow">
         <span id="stepIndicator1" class="workflow-step active">1 <b>Source</b></span>
         <span id="stepIndicator2" class="workflow-step">2 <b>Review</b></span>
         <span id="stepIndicator3" class="workflow-step">3 <b>Result</b></span>
       </div>
 
-      <div class="card hero" id="sourceCard">
+      <div class="card hero hidden" id="sourceCard">
+        <div id="activeProjectBanner" class="active-project-banner"></div>
         <div class="step-label">1 · Source</div>
         <h2>What should Agape work from?</h2>
         <p class="muted">Choose one source. Once selected, Agape hides the other source paths so you only see what matters.</p>
@@ -63,7 +86,9 @@
             <select id="project" class="source-project"><option value="0">Choose a saved project</option></select>
           </label>
           <p class="muted">Agape uses the project's brief, saved details and available conversation context.</p>
-          <details id="projectCodingOptions" class="coding-options">
+        </div>
+
+        <details id="projectCodingOptions" class="coding-options">
             <summary>Coding options</summary>
             <p class="muted">These choices are used when the selected project task is software development. Keeping model, agent and editor separate lets you compare combinations fairly.</p>
             <div class="settings-grid">
@@ -72,7 +97,6 @@
               <label class="setting"><b>Code manager</b><select id="projectCodeManager"><option value="agape">Agape workspace</option><option value="theia-lite">Theia Lite</option><option value="theia-full">Theia Full</option><option value="vscode">VS Code</option></select></label>
             </div>
           </details>
-        </div>
 
         <div id="sourceStatus" class="notice source-status">Paste some text to continue.</div>
 
