@@ -68,14 +68,39 @@ def _normalise_project_type(value: str) -> str:
     key=PROJECT_TYPE_ALIASES.get(key,key)
     return key if key in PROJECT_TYPES else "auto"
 
+NEGATED_TOOL_CLAUSE=re.compile(
+    r"\b(?:i\s+)?(?:do\s+not|don't|dont|does\s+not|doesn't|not|required\s+not|no\s+need\s+for|without)\s+"
+    r"(?:need|require|want|use|include|install|show)?\s*([^.;\n]+)",
+    re.I,
+)
+UNLESS_TAIL=re.compile(r"\b(?:unless|except\s+if|only\s+if)\b.*$",re.I)
+
+def _classification_text(description: str) -> str:
+    """Remove explicitly negated capability clauses before keyword routing.
+
+    Project descriptions often say things such as "I do not need Android or coding".
+    Those words are constraints, not positive intent, so they must not turn an ordinary
+    document job into a software project.
+    """
+    text=str(description or "")
+    def repl(match):
+        clause=UNLESS_TAIL.sub("",match.group(0))
+        # Preserve the grammatical negation as neutral text while removing the tool words.
+        return " "
+    return NEGATED_TOOL_CLAUSE.sub(repl,text)
+
 def classify_project_type(description: str, requested_type: str="auto", *, has_file: bool=False) -> str:
     requested=_normalise_project_type(requested_type)
     if requested != "auto": return requested
-    text=str(description or "").strip()
+    raw=str(description or "").strip()
+    text=_classification_text(raw)
+    # Strong output intent wins before generic development words. A request to create a
+    # business plan / report / DOCX is a document job even when it mentions tools as
+    # exclusions or implementation notes.
+    if DOC.search(text) or has_file: return "document"
     if DEV.search(text): return "development"
     if AUTOMATION.search(text): return "automation"
     if COMM.search(text): return "communications"
-    if DOC.search(text) or has_file: return "document"
     if BUSINESS.search(text): return "business"
     if RESEARCH.search(text): return "research"
     return "general"
