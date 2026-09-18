@@ -138,17 +138,26 @@ class MainframeTests(unittest.TestCase):
 
     def test_source_preparation_runs_as_background_job(self):
         original=server.prepare_intake
+        worker_started=threading.Event()
+        allow_finish=threading.Event()
         def slow_prepare(payload, progress=None):
             if progress: progress(45, 'Filling brief with AI')
-            time.sleep(0.08)
+            worker_started.set()
+            self.assertTrue(allow_finish.wait(1.0),'background worker was not released by the test')
             if progress: progress(96, 'Finalising')
             return {'intake': {'id':'I-ASYNC','field_count':3}}
         server.prepare_intake=slow_prepare
         try:
-            started_at=time.monotonic()
-            row=server._start_intake_prepare({'prepare_request_id':'TEST-ASYNC-ONE','source_mode':'paste','source_text':'hello'})
-            self.assertLess(time.monotonic()-started_at,0.05)
+            request_id='TEST-ASYNC-'+str(time.time_ns())
+            row=server._start_intake_prepare({'prepare_request_id':request_id,'source_mode':'paste','source_text':'hello'})
             self.assertTrue(row['prepare_job_id'].startswith('PREP-'))
+            self.assertTrue(worker_started.wait(0.5),'background worker did not start')
+            # The start call has returned while the worker is deliberately blocked,
+            # proving preparation is asynchronous without relying on machine-speed timing.
+            active=state.get_intake_prepare_job(row['prepare_job_id'])
+            self.assertIsNotNone(active)
+            self.assertNotEqual(active.get('status'),'COMPLETE')
+            allow_finish.set()
             final=None
             for _ in range(50):
                 final=state.get_intake_prepare_job(row['prepare_job_id'])
@@ -159,8 +168,8 @@ class MainframeTests(unittest.TestCase):
             self.assertEqual(final['progress'],100.0)
             self.assertEqual(final['result']['intake']['id'],'I-ASYNC')
         finally:
+            allow_finish.set()
             server.prepare_intake=original
-
 
     def test_source_prepare_request_is_persisted_and_can_resume_after_worker_loss(self):
         jid='PREP-TEST-RESUME-V43'

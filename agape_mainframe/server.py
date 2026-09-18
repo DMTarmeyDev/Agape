@@ -59,7 +59,7 @@ def _launch_intake_prepare_worker(job_id: str, payload: dict[str, Any], *, resum
             )
             delete_intake_prepare_request(job_id)
             return failed
-        claim_intake_prepare_job(job_id,INSTANCE_ID,"Resuming source preparation after Mainframe restart" if resumed else "Starting source preparation")
+        claimed_row=claim_intake_prepare_job(job_id,INSTANCE_ID,"Resuming source preparation after Mainframe restart" if resumed else "Starting source preparation")
 
         def worker():
             try:
@@ -79,7 +79,10 @@ def _launch_intake_prepare_worker(job_id: str, payload: dict[str, Any], *, resum
         thread=threading.Thread(target=worker,daemon=True,name=f"AgapeIntakePrepare-{job_id}")
         _PREP_THREADS[job_id]=thread
         thread.start()
-        return get_intake_prepare_job(job_id) or {"job_id":job_id,"status":"RUNNING"}
+        # Return the state captured before the worker starts. Avoid a second SQLite
+        # read here: the new worker may immediately update the same job, and a
+        # synchronous read can make the request path contend with background work.
+        return claimed_row or row or {"job_id":job_id,"status":"RUNNING"}
 
 
 def _ensure_intake_prepare_worker(job_id: str) -> dict[str, Any] | None:
