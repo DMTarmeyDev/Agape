@@ -27,3 +27,11 @@
 
 /* V5.6 public-information disclosure + project starters */
 .project-starters{margin:12px 0;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fafcfb}.project-starters>summary{display:flex;justify-content:space-between;gap:10px}.project-starter{width:100%;background:#fff}.extra-info-details{margin-top:12px;background:#f1f7ff;border-color:#c6d8ef}.extra-info-details>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:750}.extra-info-details>summary:before{content:'▸';color:var(--muted);margin-right:6px}.extra-info-details[open]>summary:before{content:'▾'}.research-opportunity{padding:10px 0;border-bottom:1px solid #dbe6ef}.research-opportunity:last-child{border-bottom:0}.extra-info-details .pill{margin-left:auto}.missing-details.hidden+.extra-info-details{margin-top:12px}
+
+
+/* AGAPE_R244_SOURCE_TEMPLATE_DROPDOWN */
+.source-template-picker{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;margin:2px 0 0}.source-template-field{display:block}.source-template-field>span{display:block;font-weight:650;margin-bottom:5px}.source-template-field select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}.source-template-picker button{min-height:43px}.source-template-help{margin:7px 0 2px}@media(max-width:760px){.source-template-picker{grid-template-columns:1fr}.source-template-picker button{width:100%}}
+
+
+/* R2.4.5 Projects permanent delete */
+.project-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:stretch;margin:8px 0}.project-row .result-file{width:100%;margin:0;text-align:left}.project-delete{align-self:stretch;color:#8a2e28;border-color:#e4b8b3;background:#fffafa;font-weight:700}.project-delete:hover{border-color:#c97f78;background:#fff0ef}@media(max-width:760px){.project-row{grid-template-columns:1fr}.project-delete{width:100%}}

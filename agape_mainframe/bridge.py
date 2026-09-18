@@ -19,6 +19,7 @@ DOC="http://127.0.0.1:8851"
 R24_BUNDLED=service_source_path("workflow-bridge")
 DOC_BUNDLED=service_source_path("document-studio")
 EXPECTED_DOC_VERSION="R31.16"
+EXPECTED_DOC_BUILD="R31.16-document-path-reliability-r2.2"
 EXPECTED_R24_BUILD="AGAPE-UNIFIED-R4.7-TARGETED-VALIDATION-REPAIR"
 
 
@@ -164,7 +165,7 @@ def ensure_existing_services(plan: dict[str,Any], project_id: int=0) -> dict[str
             _launch_ps1(root/"START-DMT-SECOND-BRAIN.ps1");result["core"]=_wait(CORE+"/api/version",35)
     if need_docs:
         s,p=request_json("GET",DOC+"/api/health",timeout=2)
-        result["documents"]=bool(s==200 and isinstance(p,dict) and str(p.get("version") or "")==EXPECTED_DOC_VERSION)
+        result["documents"]=bool(s==200 and isinstance(p,dict) and str(p.get("version") or "")==EXPECTED_DOC_VERSION and str(p.get("build_id") or "")==EXPECTED_DOC_BUILD)
         # V3.4 uses a private Document Studio port so an older installed R31.10
         # process on the legacy 8800 port can never be adopted accidentally.
         if not result["documents"] and DOC_BUNDLED.exists():
@@ -172,11 +173,11 @@ def ensure_existing_services(plan: dict[str,Any], project_id: int=0) -> dict[str
             end=time.time()+45
             while time.time()<end:
                 ds,dp=request_json("GET",DOC+"/api/health",timeout=2)
-                if ds==200 and isinstance(dp,dict) and str(dp.get("version") or "")==EXPECTED_DOC_VERSION:
+                if ds==200 and isinstance(dp,dict) and str(dp.get("version") or "")==EXPECTED_DOC_VERSION and str(dp.get("build_id") or "")==EXPECTED_DOC_BUILD:
                     result["documents"]=True;break
                 time.sleep(.5)
         if not result["documents"]:
-            raise RuntimeError("DOCUMENT_STUDIO_INCOMPATIBLE_OR_NOT_READY: V4.7 requires bundled "+EXPECTED_DOC_VERSION+" on private port 8851.")
+            raise RuntimeError("DOCUMENT_STUDIO_INCOMPATIBLE_OR_NOT_READY: requires bundled "+EXPECTED_DOC_VERSION+" build "+EXPECTED_DOC_BUILD+" on private port 8851. Restart Agape after an update so stale child services are replaced.")
     if need_work:
         s,p=request_json("GET","http://127.0.0.1:8820/api/health",timeout=2);result["work"]=s==200 and isinstance(p,dict) and p.get("ok",True) is not False
         if not result["work"] and root:
@@ -317,6 +318,63 @@ def projects() -> list[dict[str, Any]]:
         rows=p.get("projects") or []
         if isinstance(rows,list):return rows
     return []
+
+
+def delete_project(project_id: int) -> dict[str, Any]:
+    """Permanently delete one saved user project from the local Core database.
+
+    The Mainframe Projects page exposes user projects only, so the destructive
+    operation is equally narrow: system/template/test/autodev projects cannot be
+    deleted through this endpoint. SQLite foreign keys are enabled so Core-owned
+    dependent rows follow their existing CASCADE/SET NULL rules. Mainframe result
+    history is intentionally retained.
+    """
+    pid=int(project_id or 0)
+    if pid <= 0:
+        raise ValueError("PROJECT_ID_REQUIRED")
+
+    direct_error=""
+    db_path=_find_core_db()
+    if db_path:
+        con=sqlite3.connect(str(db_path),timeout=30)
+        con.row_factory=sqlite3.Row
+        try:
+            con.execute("PRAGMA foreign_keys=ON")
+            con.execute("PRAGMA busy_timeout=30000")
+            row=con.execute(
+                "SELECT id,name,COALESCE(kind,'user') AS kind FROM projects WHERE id=?",
+                (pid,),
+            ).fetchone()
+            if row is None:
+                raise ValueError("PROJECT_NOT_FOUND")
+            if str(row["kind"] or "user").strip().lower() != "user":
+                raise ValueError("PROJECT_DELETE_FORBIDDEN")
+            cur=con.execute("DELETE FROM projects WHERE id=?",(pid,))
+            if cur.rowcount != 1:
+                raise ValueError("PROJECT_NOT_FOUND")
+            con.commit()
+            return {
+                "ok":True,
+                "project_id":pid,
+                "name":str(row["name"] or ""),
+                "deleted":True,
+                "source_database":str(db_path),
+            }
+        except ValueError:
+            con.rollback()
+            raise
+        except sqlite3.Error as exc:
+            con.rollback()
+            direct_error=str(exc)
+        finally:
+            con.close()
+
+    # Compatibility fallback: the recovered Core already has this route.
+    status,payload=request_json("POST",CORE+"/api/projects/delete",{"project_id":pid},timeout=8)
+    if status==200 and isinstance(payload,dict) and payload.get("ok",True):
+        return {"ok":True,"project_id":pid,"deleted":True,"via":"core-api"}
+    detail=json.dumps(payload,ensure_ascii=False)[:900] if isinstance(payload,(dict,list)) else str(payload or "")
+    raise RuntimeError("PROJECT_DELETE_FAILED: "+(direct_error or detail or f"Core HTTP {status}"))
 
 
 def _saved_project_bundle(project_id: int) -> dict[str, Any]:
