@@ -1,0 +1,48 @@
+[
+  {
+    "id": "auto",
+    "label": "Auto — Agape chooses",
+    "description": "Use the recovered project information to choose a real executor automatically.",
+    "route": "auto",
+    "icon": "✦"
+  },
+  {
+    "id": "business-plan",
+    "label": "Business Plan",
+    "description": "Creates a decision-ready business plan using Document Studio's richer Business Proposal workflow.",
+    "route": "document",
+    "doc_type": "Business Proposal",
+    "icon": "▤"
+  },
+  {
+    "id": "business-proposal",
+    "label": "Business Proposal",
+    "description": "Creates a polished business proposal from the saved project information.",
+    "route": "document",
+    "doc_type": "Business Proposal",
+    "icon": "▣"
+  },
+  {
+    "id": "project-plan",
+    "label": "Project Plan",
+    "description": "Creates a structured project plan with timeline and implementation sections.",
+    "route": "document",
+    "doc_type": "Project Plan",
+    "icon": "✓"
+  },
+  {
+    "id": "quotation",
+    "label": "Quotation",
+    "description": "Creates a commercial quotation using the validated R31.11 quotation type.",
+    "route": "document",
+    "doc_type": "Quotation",
+    "icon": "£"
+  },
+  {
+    "id": "software-project",
+    "label": "Software / Code Project",
+    "description": "Runs the bounded Core Project Loop using the project's saved workspace and tests.",
+    "route": "project_loop",
+    "icon": "</>"
+  }
+]

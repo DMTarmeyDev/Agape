@@ -1,0 +1,8 @@
+{
+  "id": "agape.basic-formatter",
+  "name": "Basic Formatter",
+  "version": "0.1.0",
+  "description": "Deterministic text formatting skeleton: trims trailing whitespace and normalizes the final newline.",
+  "entry": "extension.py",
+  "actions": ["format_text"]
+}

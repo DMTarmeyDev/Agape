@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "browser-automation",
+  "name": "Browser automation",
+  "summary": "Use Playwright only for websites that require a real browser.",
+  "category": "research",
+  "profiles": [
+    "advanced"
+  ],
+  "hidden": false,
+  "service": null,
+  "python_modules": [],
+  "support": [
+    {
+      "kind": "pip",
+      "package": "playwright",
+      "label": "Playwright",
+      "when": "when JS-heavy browser research is required"
+    }
+  ],
+  "permissions": [
+    "network",
+    "isolated browser process"
+  ],
+  "install_policy": "on-demand"
+}

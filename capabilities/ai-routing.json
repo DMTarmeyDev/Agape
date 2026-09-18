@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "id": "ai-routing",
+  "name": "AI routing",
+  "summary": "Choose a suitable available AI automatically.",
+  "category": "core",
+  "profiles": [
+    "basic",
+    "standard",
+    "advanced"
+  ],
+  "hidden": true,
+  "service": null,
+  "python_modules": [],
+  "support": [],
+  "permissions": [
+    "model/provider metadata"
+  ],
+  "install_policy": "always"
+}

@@ -1,0 +1,53 @@
+name: Cross-platform tests
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: python -m pip install -U pip pytest
+      - name: Public release audit
+        run: python scripts/public_audit.py
+      - name: Compile
+        run: python -m compileall -q agape_mainframe main.py SETUP-API-KEYS.py
+      - name: Tests
+        env:
+          AGAPE_MAINFRAME_DATA: ${{ runner.temp }}/agape-test-data
+          AGAPE_SECURITY_ROOT: ${{ runner.temp }}/agape-test-security
+        run: python -m pytest -q tests
+  full-qa:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install full QA dependencies
+        run: |
+          python -m pip install -U pip playwright
+          python -m playwright install --with-deps chromium
+      - name: Full dummy-data user-flow QA
+        env:
+          AGAPE_MAINFRAME_DATA: ${{ runner.temp }}/agape-full-qa-mainframe
+          AGAPE_SECURITY_ROOT: ${{ runner.temp }}/agape-full-qa-security
+        run: python scripts/full_dummy_qa.py --output "${{ runner.temp }}/agape-full-qa"
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-dummy-qa
+          path: |
+            ${{ runner.temp }}/agape-full-qa/FULL-QA-REPORT.json
+            ${{ runner.temp }}/agape-full-qa/full-qa-final.png

@@ -1,0 +1,9 @@
+{
+  "country_of_origin": "United Kingdom",
+  "locale": "en-GB",
+  "paper_size": "A4",
+  "preferred_engine": "LibreOffice",
+  "preferred_open_format": "odt",
+  "auto_open": false,
+  "install_external_open_templates": true
+}

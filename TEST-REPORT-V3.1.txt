@@ -1,0 +1,14 @@
+AGAPE MAINFRAME V3.1 PROGRESS TEST REPORT
+
+Mainframe/human-first tests: 49/49 PASS
+Document/workflow tests: 47/47 PASS
+Unified fake integration: PASS
+JavaScript syntax: PASS
+Python compilation: PASS
+Live isolated HTTP health: PASS
+Live progress UI marker: PASS
+Backend progress monotonic regression: PASS
+Browser progress monotonic contract: PASS
+
+Key regression fixed:
+- overall progress can never decrease when nested AI/document/review workers reset their local percentage.

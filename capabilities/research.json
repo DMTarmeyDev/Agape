@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "id": "research",
+  "name": "Research",
+  "summary": "Find evidence and choose relevant trusted sources for a project.",
+  "category": "work",
+  "profiles": [
+    "basic",
+    "standard",
+    "advanced"
+  ],
+  "hidden": false,
+  "service": null,
+  "python_modules": [],
+  "support": [
+    {
+      "kind": "pip",
+      "package": "requests-cache",
+      "label": "Research cache",
+      "when": "for repeated web research"
+    },
+    {
+      "kind": "pip",
+      "package": "trafilatura",
+      "label": "Article extraction",
+      "when": "when long web pages need extraction"
+    },
+    {
+      "kind": "pip",
+      "package": "keyring",
+      "label": "Secure connector secrets",
+      "when": "when API-backed sources are connected"
+    }
+  ],
+  "permissions": [
+    "network to selected research sources",
+    "read project context"
+  ],
+  "install_policy": "on-demand"
+}

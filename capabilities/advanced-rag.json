@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "id": "advanced-rag",
+  "name": "Advanced RAG",
+  "summary": "Optional larger retrieval frameworks for projects that benchmark better with them.",
+  "category": "research",
+  "profiles": [
+    "advanced"
+  ],
+  "hidden": false,
+  "service": null,
+  "python_modules": [],
+  "support": [
+    {
+      "kind": "pip",
+      "package": "llama-index-core",
+      "label": "LlamaIndex Core",
+      "when": "when selected after benchmark"
+    },
+    {
+      "kind": "pip",
+      "package": "langchain-text-splitters",
+      "label": "LangChain text splitters",
+      "when": "when selected after benchmark"
+    }
+  ],
+  "permissions": [
+    "project documents only"
+  ],
+  "install_policy": "on-demand"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "agape.code-cleaner",
+  "name": "Code Cleaner",
+  "version": "0.1.0",
+  "description": "Deterministic cleanup diagnostics for whitespace, tabs and oversized lines.",
+  "entry": "extension.py",
+  "actions": ["inspect_text"]
+}

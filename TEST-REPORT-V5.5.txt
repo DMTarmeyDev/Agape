@@ -1,0 +1,31 @@
+AGAPE V5.5 PUBLIC ALPHA TEST REPORT
+DATE=2026-09-17
+
+AUTOMATED_REGRESSION_TESTS=111/111 PASS
+FULL_DUMMY_QA=22/22 PASS
+BROWSER_CONSOLE_ERRORS=0
+BROWSER_PAGE_ERRORS=0
+
+FULL DUMMY QA COVERAGE:
+- real Mainframe -> Workflow Bridge 8852 complete workflow PASS
+- backend DOCX download and format validation PASS
+- backend PDF download and format validation PASS
+- Chromium UI load with isolated dummy APIs PASS
+- upload source selection PASS
+- task form entry PASS
+- Prepare with AI PASS
+- missing-information menu closed by default PASS
+- missing-information menu open + form fill PASS
+- dedicated research progress bar PASS
+- Change brief with AI menu closed by default PASS
+- change brief open/fill/apply/auto-collapse PASS
+- create result + Download Manager PASS
+- result completion PASS
+- finished DOCX real-click download + validation PASS
+- forced PDF download failure shows Retry PASS
+- PDF Retry download + validation PASS
+- Open folder action PASS
+- Download again control PASS
+
+CRITICAL FIX:
+- finished-document proxy no longer uses obsolete port 8840; it follows active Workflow Bridge endpoint 8852.

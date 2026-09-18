@@ -1,0 +1,5 @@
+{
+  "name": "Real Aider Probe",
+  "required": false,
+  "cases": ["real_aider_probe"]
+}

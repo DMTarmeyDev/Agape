@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "id": "communications",
+  "name": "Communications",
+  "summary": "Email, messaging and approved social-account workflows.",
+  "category": "connectors",
+  "profiles": [
+    "advanced"
+  ],
+  "hidden": false,
+  "service": {
+    "id": "communications",
+    "port": 8806
+  },
+  "python_modules": [],
+  "support": [
+    {
+      "kind": "pip",
+      "package": "keyring",
+      "label": "Windows credential integration",
+      "when": "when account connectors are enabled"
+    }
+  ],
+  "permissions": [
+    "connected accounts only",
+    "explicit send approval"
+  ],
+  "install_policy": "on-demand"
+}

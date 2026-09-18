@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install discovered Python requirements
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          while IFS= read -r req; do
+            echo "Installing $req"
+            python -m pip install -r "$req"
+          done < <(find . -maxdepth 4 -type f -name "requirements.txt" -print)
+
+      - name: Compile Python sources
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import py_compile
+          import sys
+
+          failures = []
+          for path in Path(".").rglob("*.py"):
+              if any(part in {".git", ".venv", "venv", "node_modules"} for part in path.parts):
+                  continue
+              try:
+                  py_compile.compile(str(path), doraise=True)
+              except Exception as exc:
+                  failures.append((path, exc))
+
+          if failures:
+              for path, exc in failures:
+                  print(f"FAIL {path}: {exc}")
+              sys.exit(1)
+
+          print("PASS: Python sources compile")
+          PY
+
+      - name: Run pytest when tests are present
+        shell: bash
+        run: |
+          if find . -maxdepth 5 -type f \( -name "test_*.py" -o -name "*_test.py" \) | grep -q .; then
+            python -m pip install pytest
+            python -m pytest -q tests
+          else
+            echo "No pytest-style tests found; skipping pytest."
+          fi

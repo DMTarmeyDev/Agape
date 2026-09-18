@@ -1,0 +1,33 @@
+<!-- AGAPE_ARTIFACTS_R31_SETTINGS_BEGIN -->
+<script>
+(function(){
+'use strict';
+if(window.__AGAPE_ARTIFACTS_R31_SETTINGS__) return;
+window.__AGAPE_ARTIFACTS_R31_SETTINGS__=true;
+var URL='http://127.0.0.1:__ARTIFACT_PORT__/';
+function mount(){
+    if(document.getElementById('agape-artifacts-r31-settings-card')) return true;
+    var settings=document.getElementById('dmtc-page-settings') || document.querySelector('[id*="settings"]');
+    if(!settings) return false;
+    var card=document.createElement('div');
+    card.id='agape-artifacts-r31-settings-card';
+    card.className='dmtc-card';
+    card.innerHTML='<h3>Artifacts R3.1</h3>'+
+      '<p>Builds, releases, checkpoints, database backups, tests, templates, instructions and project evidence.</p>'+
+      '<p style="opacity:.72;font-size:12px">Normal source files remain tracked by manifest.json and are not duplicated as artifacts.</p>'+
+      '<button type="button" id="agape-artifacts-r31-open">Open Artifacts</button>';
+    settings.appendChild(card);
+    document.getElementById('agape-artifacts-r31-open').onclick=function(){ window.open(URL,'agape-artifacts'); };
+    return true;
+}
+function begin(){
+    var tries=0;
+    var timer=setInterval(function(){
+        tries++;
+        if(mount() || tries>80) clearInterval(timer);
+    },250);
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',begin); else begin();
+})();
+</script>
+<!-- AGAPE_ARTIFACTS_R31_SETTINGS_END -->

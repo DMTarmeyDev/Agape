@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "id": "aider",
+  "name": "Aider coding assistant",
+  "summary": "Optional repo-aware editing with Agape-owned tests and rollback.",
+  "category": "development",
+  "profiles": [
+    "advanced"
+  ],
+  "hidden": false,
+  "service": null,
+  "python_modules": [],
+  "support": [
+    {
+      "kind": "pip",
+      "package": "aider-chat",
+      "label": "Aider",
+      "when": "when repo-aware assisted editing is selected"
+    },
+    {
+      "kind": "winget",
+      "package": "git",
+      "label": "Git",
+      "when": "Aider edits a Git workspace"
+    }
+  ],
+  "permissions": [
+    "selected Git workspace",
+    "AI provider selected by Agape"
+  ],
+  "install_policy": "on-demand"
+}

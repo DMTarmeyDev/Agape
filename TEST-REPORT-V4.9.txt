@@ -1,0 +1,31 @@
+AGAPE V4.9 REAL CLICK QA - TEST REPORT
+Date: 2026-09-17
+
+ACTIVE MAINFRAME REGRESSION
+PASS - 89/89 tests
+
+PYTHON COMPILE
+PASS
+
+JAVASCRIPT SYNTAX
+PASS
+
+HTTP HEALTH
+PASS - V4.9 server returned AGAPE-MAINFRAME-V4.9-REAL-CLICK-QA
+
+PLAYWRIGHT REAL CLICK ENGINE
+IMPLEMENTED - Settings control, safe click sequence, persistent JSON report and screenshots.
+CURRENT CONTAINER EXECUTION: BLOCKED BY HOST CHROMIUM ADMINISTRATOR POLICY FOR LOCALHOST.
+Playwright-managed Chromium download could not be completed in this container because external DNS/download access is unavailable.
+This is not recorded as a UI PASS. The V4.9 Windows install must run the real-click gate on the target host before production promotion.
+
+WINDOWS DESKTOP AUTOMATION
+IMPLEMENTED - optional pywinauto support; VS Code/Theia Full launch + visible-window probes.
+NOT EXECUTED HERE - Windows-only gate.
+
+LEGACY RECOVERED R8 TEST DISCOVERY
+Two recovered legacy integration files fail during broad pytest discovery because of their historical source-manifest assumptions.
+They are outside the active Mainframe tests and are not hidden; active release tests are explicitly scoped to payload/tests.
+
+INSTALLER PAYLOAD HASH
+PASS - regenerated and matched installer EXPECTED_HASH.

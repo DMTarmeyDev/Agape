@@ -1,0 +1,12 @@
+AGAPE V3.6 WINDOWS RECOVERY FIX TEST REPORT
+
+Mainframe / human-first: 60/60 PASS
+Workflow / document bridge: 49/49 PASS
+Windows Temp recovery-root regression: PASS
+Project recovery merge: PASS
+Project recovery idempotency: PASS
+Template/mock/test exclusion: PASS
+Historic message merge into existing project: PASS
+Recovered archived user project made visible: PASS
+JavaScript syntax: PASS
+Python compile: PASS

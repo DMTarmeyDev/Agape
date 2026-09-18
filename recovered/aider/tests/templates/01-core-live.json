@@ -1,0 +1,5 @@
+{
+  "name": "Core Live Server",
+  "required": true,
+  "cases": ["live_health", "home_ui_contract"]
+}

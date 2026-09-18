@@ -1,0 +1,10 @@
+{
+  "name": "Free AI Integration",
+  "required": true,
+  "cases": [
+    "free_ai_discovery_journey",
+    "free_ai_auto_selection_journey",
+    "free_ai_provider_test_persistence",
+    "local_to_free_fallback_journey"
+  ]
+}

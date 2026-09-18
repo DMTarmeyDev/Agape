@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "policy": "Recovered code is reused/adapted where useful. Legacy installers are retained as provenance and are never executed automatically.",
+  "assets": [
+    {
+      "path": "recovered/r8-core",
+      "purpose": "DMT/Agape V3.1 R8 modular core",
+      "integration_mode": "adopt existing runtime; source retained for migration and tests",
+      "exists": true,
+      "file_count": 127,
+      "tree_sha256": "238129d991d9364faebf193df5da584c0180741174a6c9815fdfa2d6fff43def"
+    },
+    {
+      "path": "recovered/unified-r24",
+      "purpose": "Unified R2.4 repaired document/research workflow",
+      "integration_mode": "internal compatibility bridge on demand",
+      "exists": true,
+      "file_count": 12,
+      "tree_sha256": "e86645b66315836f8c6674c9c71eddcf4f3f23e85bdfc47939abec61131ee3e9"
+    },
+    {
+      "path": "recovered/aider",
+      "purpose": "Agape AI Studio V0.3 Aider R2",
+      "integration_mode": "source retained; optional development capability",
+      "exists": true,
+      "file_count": 79,
+      "tree_sha256": "b45cc708d9369d325d37740fbe82d88a210b0c73ba19ee004476c363d0737652"
+    },
+    {
+      "path": "recovered/installers/AGAPE-COMMS-HUB-R3-ONEFILE.ps1",
+      "purpose": "Communications Hub R3",
+      "integration_mode": "provenance/recovery asset; not auto-run",
+      "exists": true,
+      "size": 49778,
+      "sha256": "d8e626a2ae205022acb3e3cef4b2f290771897bd14a9073a8883a69a0678916a"
+    },
+    {
+      "path": "recovered/installers/AGAPE-ARTIFACTS-R6.2-VERIFIED-MAINTENANCE-ONEFILE.ps1",
+      "purpose": "Artifacts R6.2",
+      "integration_mode": "provenance/recovery asset; adopt existing service when present",
+      "exists": true,
+      "size": 72429,
+      "sha256": "f326616fe9b55a9ff9ed44d930e3c23788c3db7cd33b72d578f8285b239379ee"
+    },
+    {
+      "path": "recovered/installers/AGAPE-MAIN-HOST-R1.ps1",
+      "purpose": "Windows Main Host R1",
+      "integration_mode": "provenance/recovery asset; not auto-run",
+      "exists": true,
+      "size": 38806,
+      "sha256": "9aed2d9f17d2880c27296af3895f25b637f2a8cccf32d98b4d9f2e8652b66c4c"
+    },
+    {
+      "path": "recovered/installers/AGAPE-R32.8-OWNER-ACCESS-HUB-AUTOSTART-EMAIL-GUIDE.ps1",
+      "purpose": "Public Alpha / owner access work",
+      "integration_mode": "advanced optional capability source; not auto-run",
+      "exists": true,
+      "size": 89732,
+      "sha256": "4653ce4fbee4bfab5b02b40b5487dcc6e36c9e3b64875af28f0df215aba2657c"
+    },
+    {
+      "path": "recovered/installers/AGAPE-V3.1-FULL-REBUILD-R1-ONEFILE.ps1",
+      "purpose": "Full rebuild / R31.11 promotion evidence",
+      "integration_mode": "recovery/provenance; not auto-run",
+      "exists": true,
+      "size": 60358,
+      "sha256": "084baf270ab70975d3def1b029537db7b91466c978d3c901cde53615b4a7213e"
+    },
+    {
+      "path": "recovered/installers/INSTALL-AGAPE-FROM-PRIVATE-GITHUB-R3.ps1",
+      "purpose": "Private GitHub installer R3",
+      "integration_mode": "recovery/provenance; not auto-run",
+      "exists": true,
+      "size": 25355,
+      "sha256": "6dc9759dc726f67853f7d0cba4f6e7560a08d5eed99f78952cf8a471b3a04044"
+    },
+    {
+      "path": "recovered/installers/AGAPE-UI-R1.ps1",
+      "purpose": "Human-first UI R1",
+      "integration_mode": "design/source reused in simplified Mainframe UI",
+      "exists": true,
+      "size": 38944,
+      "sha256": "897e47751cc0156a634df66c59031ca4e9677f59a88c816dfdcf267ff68d8990"
+    }
+  ]
+}

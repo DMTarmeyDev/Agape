@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "local-ai",
+  "name": "Local AI",
+  "summary": "Run small local models with Ollama when suitable for this computer.",
+  "category": "ai",
+  "profiles": [
+    "standard",
+    "advanced"
+  ],
+  "hidden": false,
+  "service": null,
+  "python_modules": [],
+  "support": [
+    {
+      "kind": "winget",
+      "package": "ollama",
+      "label": "Ollama local AI runtime",
+      "when": "when local/private AI is wanted"
+    }
+  ],
+  "permissions": [
+    "localhost Ollama"
+  ],
+  "install_policy": "on-demand"
+}

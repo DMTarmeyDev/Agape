@@ -1,0 +1,14 @@
+{
+  "_instructions": "Copy this file to API-KEYS.local.json and fill only the providers you use. Never commit API-KEYS.local.json. Agape can import it on first start or from Settings. You can also skip this file and add keys one at a time inside Agape.",
+  "keys": {
+    "openai": "",
+    "anthropic": "",
+    "google": "",
+    "openrouter": "",
+    "groq": "",
+    "mistral": "",
+    "deepseek": "",
+    "together": "",
+    "xai": ""
+  }
+}

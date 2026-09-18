@@ -1,0 +1,9 @@
+AGAPE V3.4 TEST REPORT
+
+Mainframe human-first tests: 56/56 PASS
+Workflow/document bridge tests: 49/49 PASS
+Document Studio import/version gate: PASS (R31.11)
+Python compile: PASS
+Installer test isolation: PASS
+
+Key regression: install-time tests cannot read the live user Core database.

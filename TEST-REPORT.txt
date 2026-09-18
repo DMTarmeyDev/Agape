@@ -1,0 +1,25 @@
+AGAPE MAINFRAME V3.0 HUMAN-FIRST RELEASE TEST REPORT
+DATE=2026-09-16
+
+MAINFRAME_HUMAN_FIRST_UNIT_CONTRACT_TESTS=48/48 PASS
+WORKFLOW_BRIDGE_DOCUMENT_REVISION_TESTS=45/45 PASS
+PYTHON_COMPILE_CHECK=PASS
+JAVASCRIPT_NODE_SYNTAX_CHECK=PASS
+HTTP_HEALTH_UI_SMOKE=PASS
+
+V3.0 CONTRACTS TESTED:
+- Exactly three normal workflow steps: Source -> Review -> Result
+- Paste / Upload / Saved Project are mutually exclusive source modes
+- Irrelevant source branches are discarded after selection
+- Missing-info controls disappear when no gaps remain
+- Edits save automatically before document creation
+- Writing checker preserves names, prices and UK spellings
+- Repeated-word and mechanical grammar detection works
+- Standard is the fast new-install default
+- Gold Standard normal default is 3 reviewers, with 2-10 selectable
+- Document jobs do not probe Work Engine unnecessarily
+- Bundled Python Document Studio is preferred over the legacy PowerShell launcher
+- Long document work uses async start/status jobs
+- Validation repair, Gold review and versioned AI revision remain intact
+- Restart/resume logic remains intact
+- Approved-installer security remains exact-hash/audited and does not disable Defender

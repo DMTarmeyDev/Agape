@@ -1,0 +1,9 @@
+AGAPE V3.7 SAFE SIDE-BY-SIDE UPGRADE TEST REPORT
+
+Mainframe tests: 60/60 PASS
+Workflow/document tests: 49/49 PASS
+Document Studio import/version: PASS R31.11
+Python compile: PASS
+Upgrade strategy: side-by-side; live V3.6 program folder is not deleted
+Runtime switch: verifies Agape ownership on 8850/8851/8852 before taskkill
+Blanket python.exe termination: NOT USED

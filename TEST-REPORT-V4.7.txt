@@ -1,0 +1,7 @@
+AGAPE V4.7 RELEASE TEST REPORT
+Mainframe: 81/81 PASS
+Workflow/document: 56/56 PASS
+Document Studio: R31.16 import PASS
+Targeted Findings + Analysis repair: PASS
+Short-only warning fallback: PASS
+V4.6 safe cutover retained

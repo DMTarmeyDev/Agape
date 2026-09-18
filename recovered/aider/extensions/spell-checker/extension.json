@@ -1,0 +1,8 @@
+{
+  "id": "agape.spell-checker",
+  "name": "Spell Checker",
+  "version": "0.1.0",
+  "description": "Small deterministic spelling skeleton for common development/documentation typos.",
+  "entry": "extension.py",
+  "actions": ["check_text"]
+}

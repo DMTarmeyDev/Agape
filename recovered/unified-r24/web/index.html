@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Agape</title>
+  <link rel="stylesheet" href="/web/styles.css">
+</head>
+<body data-theme="forest">
+  <header class="topbar">
+    <div class="brand"><div class="mark">A</div><div><strong>Agape</strong><span>One source. Finished work.</span></div></div>
+    <nav>
+      <button class="nav active" data-page="home">Create</button>
+      <button class="nav" data-page="recent">Recent Work</button>
+      <button class="nav" data-page="settings">Settings</button>
+    </nav>
+    <div id="servicePills" class="service-pills"></div>
+  </header>
+
+  <main>
+    <section id="page-home" class="page active">
+      <div class="hero compact-hero">
+        <div>
+          <span class="eyebrow">AGAPE UNIFIED R2.4</span>
+          <h1>Upload one document. Let Agape build the rest.</h1>
+          <p>Agape reads the source, completes the full document brief, chooses the design and template, then gives you one simple choice: create now or use a top-AI review team for the strongest result.</p>
+        </div>
+        <div class="hero-card"><b>Gold Standard mode</b><span>Best available AI creates the first validated draft. Several connected top AI reviewers critique it independently, then a lead reviewer combines the strongest ideas into one final document.</span></div>
+      </div>
+
+      <div class="stepper three" id="stepper">
+        <div class="step active"><b>1</b><span>Context</span></div><i></i>
+        <div class="step"><b>2</b><span>Upload</span></div><i></i>
+        <div class="step"><b>3</b><span>Create</span></div>
+      </div>
+
+      <section class="card wizard-card" id="projectCard">
+        <div class="card-title">
+          <div><span class="step-label">STEP 1</span><h2>Use a saved project? <span class="optional">Optional</span></h2><p>Select a project to bring in its saved context, or continue without one and let the uploaded document define the job.</p></div>
+          <button id="refreshProjects" class="secondary">Refresh</button>
+        </div>
+        <select id="projectSelect"><option value="">Loading saved projects…</option></select>
+        <div id="projectStatus" class="inline-status"></div>
+        <div class="next-row"><button id="projectNext" class="primary next-button">Continue</button></div>
+      </section>
+
+      <section class="card wizard-card hidden" id="uploadCard">
+        <div class="card-title">
+          <div><span class="step-label">STEP 2</span><h2>Upload the source document</h2><p>One document can provide the facts for the entire brief. Agape extracts it, fills every document field, and chooses the most suitable document type, template, theme and filename.</p></div>
+          <span id="projectNameBadge" class="badge"></span>
+        </div>
+
+        <label id="dropZone" class="drop-zone">
+          <input id="sourceFile" type="file" accept=".pdf,.doc,.docx,.odt,.ppt,.pptx,.odp,.xls,.xlsx,.ods,.txt,.md,.csv,.json" hidden>
+          <span class="drop-icon">↑</span>
+          <b>Choose one source document</b>
+          <span>PDF, Word, PowerPoint, Excel, OpenDocument or text · maximum 25 MB</span>
+        </label>
+        <div id="sourceFileState" class="source-state muted">No source document selected.</div>
+
+        <details class="optional-details">
+          <summary>Extra instructions <span>optional</span></summary>
+          <textarea id="extraInstruction" rows="4" placeholder="Example: Make this an investment-grade UK business plan. Use a professional tone and clearly label any assumptions."></textarea>
+        </details>
+
+        <div id="intakeProgress" class="intake-progress hidden">
+          <div class="progress-head"><b id="intakeStage">Reading document…</b><span id="intakePercent">10%</span></div>
+          <div class="progress-track"><div id="intakeBar"></div></div>
+          <p id="intakeMessage" class="muted">Agape is extracting the source document.</p>
+        </div>
+
+        <div id="understoodCard" class="understood hidden">
+          <div class="understood-head"><div><span class="ok-badge">READY</span><h3>Agape understands the document</h3></div><span id="fieldCount" class="big-count"></span></div>
+          <div id="designSummary" class="design-grid"></div>
+          <div id="missingSummary" class="notice"></div>
+          <div id="gapActions" class="gap-actions">
+            <button id="researchMissing" class="secondary strong-action" type="button">Find Missing Information with AI</button>
+            <button id="goAhead" class="primary next-button" type="button">Go ahead → choose quality</button>
+          </div>
+          <div id="gapProgress" class="inline-status hidden"></div>
+          <details id="userQuestionsDetails" class="optional-details hidden">
+            <summary>Questions only you can answer <span id="userQuestionCount">0</span></summary>
+            <p class="muted">Agape has already tried the uploaded source and deeper research. Add any private or project-specific facts you know, or leave them unanswered and continue.</p>
+            <div id="userQuestions" class="question-list"></div>
+            <div class="next-row"><button id="saveUserAnswers" class="secondary" type="button">Save my answers</button></div>
+          </details>
+          <div id="researchSummary" class="research-summary"></div>
+          <details id="researchPlanDetails">
+            <summary>Top research sources Agape selected</summary>
+            <div id="researchPlanList" class="research-plan-list"></div>
+          </details>
+          <details>
+            <summary>What Agape filled from the document</summary>
+            <div id="fieldSummary" class="field-summary"></div>
+          </details>
+          <div class="next-row"><button id="uploadNext" class="secondary next-button">Continue to quality options</button></div>
+        </div>
+      </section>
+
+      <section class="card wizard-card hidden" id="createCard">
+        <div class="card-title"><div><span class="step-label">STEP 3</span><h2>Choose the quality level</h2><p>No more form filling is required. Agape will use the uploaded source and the completed brief.</p></div></div>
+
+        <div class="quality-grid">
+          <button id="createNow" class="quality-card standard">
+            <span class="quality-kicker">CREATE NOW</span>
+            <b>Best AI · validated result</b>
+            <p>Use the best available model, the completed brief, automatic template selection and document validation.</p>
+            <span class="quality-action">Create document →</span>
+          </button>
+          <button id="createGold" class="quality-card gold">
+            <span class="quality-kicker">GOLD STANDARD</span>
+            <b>Top AI panel · lead synthesis</b>
+            <p>Create the first result, ask up to 10 connected top AI models to review it independently, then let the strongest lead reviewer merge the best ideas and rebuild the final document.</p>
+            <span id="goldReadyText" class="quality-action">Checking AI team…</span>
+          </button>
+        </div>
+
+        <section class="reviewer-selector-card" id="jobReviewerSelector">
+          <div class="card-title"><div><h3>Gold Standard model selector</h3><p>Choose how many independent AI reviewers to use. Automatic mode selects the strongest connected provider/model pairs; custom mode lets you choose the exact team.</p></div><span class="badge">2–10 reviewers</span></div>
+          <div class="row settings-row">
+            <label>Review team size<select id="jobReviewerCount"><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option selected>10</option></select></label>
+            <label class="check"><input id="jobReviewerAuto" type="checkbox" checked> Automatically use top-ranked connected AIs</label>
+            <label>Lead reviewer<select id="jobLeadReviewer"><option value="auto">Automatic — strongest successful reviewer</option></select></label>
+          </div>
+          <div id="jobReviewerStatus" class="inline-status">Checking connected AI reviewers…</div>
+          <div id="jobReviewerList" class="reviewer-model-grid"></div>
+        </section>
+
+        <details class="optional-details output-settings">
+          <summary>Output settings <span>optional</span></summary>
+          <div class="row settings-row">
+            <label>Format<select id="format"><option value="docx">Word document (.docx)</option><option value="odt">OpenDocument (.odt)</option><option value="pdf">PDF</option></select></label>
+            <label>Style<select id="documentTheme"><option value="auto">Automatic — let Agape choose</option><option>Executive Navy</option><option>Forest Green</option></select></label>
+            <label class="check"><input id="alsoPdf" type="checkbox" checked> Also create PDF</label>
+          </div>
+        </details>
+
+        <div id="workPanel" class="work-panel hidden">
+          <div class="progress-head"><b id="workState">Preparing</b><span id="workJobId"></span></div>
+          <div class="progress-track"><div id="progressBar"></div></div>
+          <div id="workMessage" class="work-message"></div>
+          <div id="eventList" class="event-list"></div>
+          <div id="resultPanel" class="result-panel"></div>
+        </div>
+      </section>
+    </section>
+
+    <section id="page-recent" class="page">
+      <div class="section-head"><div><span class="eyebrow">RECENT WORK</span><h1>Finished and in-progress work</h1></div><button id="refreshJobs" class="secondary">Refresh</button></div>
+      <div id="recentJobs" class="job-grid"></div>
+    </section>
+
+    <section id="page-settings" class="page">
+      <div class="section-head"><div><span class="eyebrow">SETTINGS</span><h1>AI routing, appearance and quality</h1></div></div>
+      <section class="card router-settings-card">
+        <div class="card-title"><div><h2>AI router</h2><p>Choose which routing engine selects the AI model/provider. Agape Router is the recommended default and can be changed at any time.</p></div><span id="activeRouterBadge" class="badge">Agape Router</span></div>
+        <div id="settingsRouterChoices" class="router-choice-grid"></div>
+        <div id="settingsRouterMessage" class="inline-status"></div>
+        <div class="row" style="margin-top:12px"><button id="settingsTestRouter" class="secondary">Test selected router</button><button id="saveRouterSetting" class="primary">Save router</button></div>
+      </section>
+      <section class="card research-settings-card">
+        <div class="card-title"><div><h2>Research sources</h2><p>Agape automatically ranks all available sources and selects the best 10 for the subject of each project. Connect optional commercial/social sources here; official public sources work without a personal account where supported.</p></div><span id="researchReadyBadge" class="badge">Loading…</span></div>
+        <div class="notice good"><b>Research safety:</b> Agape uses official/primary sources for factual claims. Social/community sources are used for discovery and sentiment. Never enter your account password, MFA code or browser cookies here.</div>
+        <div id="researchCredentialSupport" class="inline-status"></div>
+        <div class="row" style="margin:10px 0"><button id="installResearchCredentialSupport" class="secondary">Install secure credential support</button><button id="refreshResearchSources" class="secondary">Refresh sources</button></div>
+        <div id="researchSourceGrid" class="research-source-grid"></div>
+      </section>
+      <section class="card"><h2>App theme</h2><div class="theme-grid"><button data-theme-choice="forest" class="theme-choice forest">Forest Green</button><button data-theme-choice="navy" class="theme-choice navy">Executive Navy</button><button data-theme-choice="sand" class="theme-choice sand">Warm Sand</button><button data-theme-choice="dark" class="theme-choice dark">Dark Slate</button></div></section>
+      <section class="card reviewer-settings-card"><div class="card-title"><div><h2>Gold Standard AI team</h2><p>Set the default review team. Automatic Top N is recommended; choose specific connected provider/model pairs when you want a fixed panel.</p></div><span class="badge">Up to 10</span></div><div class="row settings-row"><label>Default team size<select id="settingsReviewerCount"><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option selected>10</option></select></label><label class="check"><input id="settingsReviewerAuto" type="checkbox" checked> Automatically use top-ranked connected AIs</label><label>Default lead<select id="settingsLeadReviewer"><option value="auto">Automatic — strongest successful reviewer</option></select></label></div><div id="settingsReviewerStatus" class="inline-status">Checking connected AI reviewers…</div><div id="settingsReviewerList" class="reviewer-model-grid"></div><div class="row"><button id="saveReviewerSetting" class="primary">Save review team</button><a class="secondary link-button" href="http://127.0.0.1:8800/" target="_blank">Connect or manage AI providers</a></div></section>
+      <section class="card"><details><summary><b>Advanced — engines and diagnostics</b><span>Normally you do not need these controls.</span></summary><div class="advanced-body"><div id="advancedServices"></div><div class="row"><a class="secondary link-button" href="http://127.0.0.1:8797/" target="_blank">Open Core R8</a><a class="secondary link-button" href="http://127.0.0.1:8800/" target="_blank">Open Document Studio</a><a class="secondary link-button" href="http://127.0.0.1:8820/" target="_blank">Open Work Engine R1.3</a></div><pre id="workEngineStatus">Advanced status not loaded.</pre><button id="loadAdvanced" class="secondary">Load engine status</button></div></details></section>
+    </section>
+  </main>
+
+  <div id="setupOverlay" class="setup-overlay hidden">
+    <div class="setup-shell">
+      <span class="eyebrow">FIRST-RUN SETUP</span>
+      <h1>Choose how Agape selects AI models</h1>
+      <p class="muted">You can change this later in <b>Settings → AI router</b>. Agape Router is selected by default.</p>
+      <div id="setupRouterChoices" class="router-choice-grid setup-router-grid"></div>
+      <div id="setupRouterMessage" class="notice good">Agape Router is the recommended starting choice.</div>
+      <div class="setup-actions"><button id="setupTestRouter" class="secondary">Test selected router</button><button id="setupFinish" class="primary big">Finish setup</button></div>
+      <p class="setup-note">Router choice does not change or move your recovered projects or OneDrive database.</p>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="/web/app.js"></script>
+</body>
+</html>

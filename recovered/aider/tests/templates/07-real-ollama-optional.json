@@ -1,0 +1,5 @@
+{
+  "name": "Real Local Ollama Probe",
+  "required": false,
+  "cases": ["real_ollama_probe"]
+}

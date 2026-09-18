@@ -1,0 +1,16 @@
+AGAPE V4.6 SAFE RUNTIME CUTOVER - RELEASE TEST REPORT
+Date: 2026-09-17
+
+Mainframe tests: 81/81 PASS
+Workflow/document tests: 54/54 PASS
+Document Studio import: PASS (R31.15)
+Python compile: PASS
+JavaScript syntax: PASS
+Legacy watchdog ancestry simulation: PASS
+Verified watchdog tree selected before listener: PASS
+V4.6 runtime stop marker contract: PASS
+No SQLite/test databases shipped: PASS
+
+Regression fixed:
+V4.3-V4.5 visible server watchdog could restart main.py after Step 8 killed the listener, causing port 8850 to re-bind and installer return code 63.
+V4.6 stops the verified watchdog parent tree and future watchdogs honour a persistent runtime-stop marker before restarting.

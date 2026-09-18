@@ -1,0 +1,5 @@
+{
+  "name": "Project and File Workflow",
+  "required": true,
+  "cases": ["project_file_journey", "path_security", "persistence_restart"]
+}

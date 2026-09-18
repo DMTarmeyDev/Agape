@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "id": "development",
+  "name": "Software development",
+  "summary": "Project Loop, coding-model routing, selectable coding agents, external code managers, tests, checkpoints, repair and release controls.",
+  "category": "work",
+  "profiles": [
+    "standard",
+    "advanced"
+  ],
+  "hidden": false,
+  "service": {
+    "id": "r8-core",
+    "port": 8797
+  },
+  "python_modules": [],
+  "support": [
+    {
+      "kind": "winget",
+      "package": "git",
+      "label": "Git",
+      "when": "when source control is required"
+    },
+    {
+      "kind": "winget",
+      "package": "vscode",
+      "label": "VS Code",
+      "when": "when the user wants an external editor"
+    }
+  ],
+  "permissions": [
+    "selected workspace",
+    "test subprocesses after approval"
+  ],
+  "install_policy": "on-demand",
+  "code_managers": [
+    {
+      "id": "agape",
+      "label": "Agape workspace",
+      "install": "built-in"
+    },
+    {
+      "id": "theia-lite",
+      "label": "Theia Lite",
+      "install": "optional embedded build"
+    },
+    {
+      "id": "theia-full",
+      "label": "Theia Full",
+      "install": "official Eclipse download"
+    },
+    {
+      "id": "vscode",
+      "label": "VS Code",
+      "install": "winget or official download"
+    }
+  ],
+  "coding_agents": [
+    "agape-native",
+    "aider",
+    "openhands",
+    "open-interpreter",
+    "compare"
+  ]
+}
