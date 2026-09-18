@@ -1,12 +1,18 @@
 name: Cross-platform preview build
 
 on:
+  push:
+    branches:
+      - 'release/v5.6.1-r2.5.0-cross-platform-*'
   workflow_dispatch:
     inputs:
       agape_base_url:
         description: HTTPS Agape URL embedded in the Android wrapper
         required: true
         default: https://agape-alpha.tail2a2d28.ts.net/
+
+env:
+  AGAPE_BASE_URL: ${{ github.event.inputs.agape_base_url || 'https://agape-alpha.tail2a2d28.ts.net/' }}
 
 permissions:
   contents: read
@@ -102,8 +108,6 @@ jobs:
         with:
           gradle-version: '9.6.0'
       - name: Build installable APK
-        env:
-          AGAPE_BASE_URL: ${{ inputs.agape_base_url }}
         run: gradle --no-daemon -p android-app :app:assembleDebug -PagapeBaseUrl="$AGAPE_BASE_URL"
       - name: Verify and stage APK
         run: |
